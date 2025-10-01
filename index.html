@@ -1,63 +1,97 @@
 <!doctype html>
 <html>
-    <head>
-          <meta charset="utf-8">
-          <title>but Letters</title>
-    </head>
-    <body>
-      <h1>but Letters: or sth</h1>
-      <p> some egg or sth</p>
-      <div id="output"></div>
-      <script>
-
-function playSound(url) {
-  const audio = new Audio(url);
-  audio.play();
-};      
-
-
-// find the #output element
-  const outputEl = document.getElementById("output");
-
-  // Utility: make an element, set a few attributes, append to #output
-  function addDomElement(tag, attrs) {
-    const el = document.createElement(tag);
-    if (attrs) {
-      for (const k in attrs) {
-        if (k === "text") {
-          el.textContent = attrs[k];
-        } else {
-          el.setAttribute(k, attrs[k]);
-        }
+  <head>
+    <meta charset="utf-8">
+    <title>but Letters</title>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden; /* prevents scrollbars when elements go out of bounds */
+        height: 100vh;
+        width: 100vw;
+        position: relative;
+        background: #f4f4f4;
       }
-    }
-    outputEl.appendChild(el);
-    return el;
-  };
+      #output {
+        position: relative;
+        height: 100%;
+        width: 100%;
+      }
+      #output > * {
+        position: absolute; /* let elements be positioned randomly */
+        font-size: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>but Letters: or sth</h1>
+    <p>some egg or sth</p>
+    <div id="output"></div>
+    <script>
+      function playSound(url) {
+        const audio = new Audio(url);
+        audio.play();
+      }
 
-  // Listen for keydown events
-  document.addEventListener("keydown", function(event) {
-    console.log("Key pressed:", event.key);
-    if (event.key === "Backspace") {
-      if (outputEl.lastChild) {
-        outputEl.removeChild(outputEl.lastChild);}}
-    else if (event.key === "c" || event.key === "C") {
-        addDomElement("img", {src: "https://media2.giphy.com/media/v1.Y2lkPTZjMDliOTUyeTcyNHM4b3Mya3pmczY5MDBldW4zcDE2dGFsYjFvdjBka2RuNGRvdiZlcD12MV9naWZzX3NlYXJjaCZjdT1n/3vcHdyb75qRIA/200w.gif"})} 
-    else if (event.key === "d" || event.key === "D") {
-      addDomElement("span", { text: "BARK!" });} 
-    else if (event.key === "v" || event.key === "V") {
-      addDomElement("video", {
-      src: "https://i.imgur.com/Pj87n9Q.mp4",
-      width: "300",
-      height: "300",
-      autoplay: "true",
-      muted: "",
-      controls: ""});}
-    else if (event.key === "s" || event.key === "S") {
-      playSound("https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg");
-      addDomElement("span", { text: "(sound played)" });}
-    else {addDomElement("span", { text: event.key })};
-  });
-      </script>
-    </body>
+      const outputEl = document.getElementById("output");
+
+      // Utility: add element at random position
+      function addDomElement(tag, attrs) {
+        const el = document.createElement(tag);
+        if (attrs) {
+          for (const k in attrs) {
+            if (k === "text") {
+              el.textContent = attrs[k];
+            } else {
+              el.setAttribute(k, attrs[k]);
+            }
+          }
+        }
+
+        // random position within viewport
+        const maxX = window.innerWidth - 100; // leave some margin
+        const maxY = window.innerHeight - 100;
+        const x = Math.floor(Math.random() * maxX);
+        const y = Math.floor(Math.random() * maxY);
+        el.style.left = x + "px";
+        el.style.top = y + "px";
+
+        outputEl.appendChild(el);
+        return el;
+      }
+
+      // Listen for keydown events
+      document.addEventListener("keydown", function (event) {
+        console.log("Key pressed:", event.key);
+        if (event.key === "Backspace") {
+          if (outputEl.lastChild) {
+            outputEl.removeChild(outputEl.lastChild);
+          }
+        } else if (event.key === "c" || event.key === "C") {
+          addDomElement("img", {
+            src: "https://media2.giphy.com/media/v1.Y2lkPTZjMDliOTUyeTcyNHM4b3Mya3pmczY5MDBldW4zcDE2dGFsYjFvdjBka2RuNGRvdiZlcD12MV9naWZzX3NlYXJjaCZjdT1n/3vcHdyb75qRIA/200w.gif",
+            width: "100",
+          });
+        } else if (event.key === "d" || event.key === "D") {
+          addDomElement("span", { text: "BARK!" });
+        } else if (event.key === "v" || event.key === "V") {
+          addDomElement("video", {
+            src: "https://i.imgur.com/Pj87n9Q.mp4",
+            width: "150",
+            height: "150",
+            autoplay: "true",
+            muted: "",
+            controls: "",
+          });
+        } else if (event.key === "s" || event.key === "S") {
+          playSound(
+            "https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg"
+          );
+          addDomElement("span", { text: "(sound played)" });
+        } else {
+          addDomElement("span", { text: event.key });
+        }
+      });
+    </script>
+  </body>
 </html>
