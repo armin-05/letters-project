@@ -2,178 +2,147 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Mouse Type Box</title>
+    <title>Paint Wall</title>
     <style>
       body {
-        margin: 0;
-        height: 100vh;
+        background: #ccc;
         display: flex;
         justify-content: center;
         align-items: center;
-        background: #333;
-        flex-direction: column;
+        height: 100vh;
       }
 
-      #box {
-        width: 600px;
-        height: 400px;
-        background: #f8f8f0; /* off-white */
-        border: 3px solid #222;
+      #canvas {
+        width: 1200px;   /* bigger wall */
+        height: 700px;   /* bigger wall */
+        border: 3px solid black;
         position: relative;
-        overflow: hidden;
+        /* CSS "brick wall" look */
+        background:
+          repeating-linear-gradient(
+            0deg,
+            #d2691e,
+            #d2691e 40px,
+            #b55217 40px,
+            #b55217 42px
+          ),
+          repeating-linear-gradient(
+            90deg,
+            #d2691e,
+            #d2691e 100px,
+            #a94d15 100px,
+            #a94d15 102px
+          );
+        background-size: 100px 42px;
       }
 
-      #box span,
-      #box .square {
+      /* Common paint style */
+      .painted {
         position: absolute;
-        user-select: none;
         pointer-events: none;
+        mix-blend-mode: multiply;
+        opacity: 0.7; /* looks painted */
       }
 
-      #box span {
-        font-family: monospace;
-      }
-
-      #box .square {
-        width: 40px;
-        height: 40px;
-        background: #e2e2d0; /* slightly different color */
-      }
-
+      /* Controls */
       #controls {
-        margin-top: 10px;
-        width: 600px;
+        position: absolute;
+        bottom: -60px;
+        right: 0;
         display: flex;
-        justify-content: space-between;
+        gap: 15px;
       }
 
-      #size-controls,
-      #mode-controls {
-        display: flex;
-        gap: 10px;
-      }
-
-      #controls button {
+      .btn {
         padding: 5px 10px;
-        border: 1px solid #222;
         background: #eee;
+        border: 1px solid #333;
         cursor: pointer;
-        font-family: sans-serif;
-        font-size: 14px;
-        border-radius: 4px;
+        user-select: none;
       }
 
-      #controls button.active {
-        background: #bbb;
-      }
-
-      #controls button:hover {
+      .btn:hover {
         background: #ddd;
       }
     </style>
   </head>
   <body>
-    <div id="box"></div>
-
-    <!-- Controls -->
-    <div id="controls">
-      <div id="size-controls">
-        <button data-size="40">Normal</button>
-        <button data-size="100">Medium</button>
-        <button data-size="180">Big</button>
-      </div>
-      <div id="mode-controls">
-        <button id="lettersBtn" class="active">Letters Mode</button>
-        <button id="squaresBtn">Square Mode</button>
+    <div id="canvas">
+      <div id="controls">
+        <div>
+          <span class="btn" onclick="setSize(2)">Normal</span>
+          <span class="btn" onclick="setSize(5)">Medium</span>
+          <span class="btn" onclick="setSize(9)">Big</span>
+        </div>
+        <div>
+          <span class="btn" onclick="setMode('text')">Text</span>
+          <span class="btn" onclick="setMode('block')">Paint Roller</span>
+        </div>
       </div>
     </div>
 
     <script>
-      const box = document.getElementById("box");
-      let mouseX = 0;
-      let mouseY = 0;
-      let currentSize = 40; // default size (Normal)
-      let mode = "letters"; // "letters" or "squares"
-      let painting = false; // track paint roller state
+      const canvas = document.getElementById("canvas");
+      let textSize = 2; // default normal
+      let mode = "text";
+      let isMouseDown = false;
 
-      // Track mouse position inside the box
-      box.addEventListener("mousemove", (e) => {
-        const rect = box.getBoundingClientRect();
-        mouseX = e.clientX - rect.left;
-        mouseY = e.clientY - rect.top;
-
-        // If painting in square mode, drop squares continuously
-        if (mode === "squares" && painting) {
-          spawnSquare(mouseX, mouseY);
-        }
-      });
-
-      // Place letters at cursor
-      document.addEventListener("keydown", (event) => {
-        if (mode === "letters" && event.key.length === 1) {
-          const letter = document.createElement("span");
-          letter.textContent = event.key;
-          letter.style.left = mouseX + "px";
-          letter.style.top = mouseY + "px";
-          letter.style.fontSize = currentSize + "px";
-          letter.style.transform = "translate(-50%, -50%)";
-          box.appendChild(letter);
-        }
-      });
-
-      // Paint roller events
-      box.addEventListener("mousedown", () => {
-        if (mode === "squares") {
-          painting = true;
-          spawnSquare(mouseX, mouseY);
-        }
-      });
-
-      box.addEventListener("mouseup", () => {
-        painting = false;
-      });
-
-      box.addEventListener("mouseleave", () => {
-        painting = false; // stop painting if cursor leaves box
-      });
-
-      function spawnSquare(x, y) {
-        const square = document.createElement("div");
-        square.className = "square";
-        square.style.width = currentSize + "px";
-        square.style.height = currentSize + "px";
-        square.style.left = x + "px";
-        square.style.top = y + "px";
-        square.style.transform = "translate(-50%, -50%)";
-        box.appendChild(square);
+      function setSize(multiplier) {
+        textSize = multiplier;
       }
 
-      // Handle size buttons
-      document.querySelectorAll("#size-controls button").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          currentSize = parseInt(btn.dataset.size, 10);
-          document
-            .querySelectorAll("#size-controls button")
-            .forEach((b) => b.classList.remove("active"));
-          btn.classList.add("active");
-        });
+      function setMode(m) {
+        mode = m;
+      }
+
+      // Handle text placement
+      document.addEventListener("keydown", (event) => {
+        if (mode === "text" && event.key.length === 1) {
+          const span = document.createElement("span");
+          span.textContent = event.key;
+          span.className = "painted";
+          span.style.fontSize = `${textSize}em`;
+
+          span.style.left = lastMouseX + "px";
+          span.style.top = lastMouseY + "px";
+          canvas.appendChild(span);
+        }
       });
 
-      // Handle mode buttons
-      const lettersBtn = document.getElementById("lettersBtn");
-      const squaresBtn = document.getElementById("squaresBtn");
+      let lastMouseX = 0;
+      let lastMouseY = 0;
 
-      lettersBtn.addEventListener("click", () => {
-        mode = "letters";
-        lettersBtn.classList.add("active");
-        squaresBtn.classList.remove("active");
+      canvas.addEventListener("mousemove", (e) => {
+        const rect = canvas.getBoundingClientRect();
+        lastMouseX = e.clientX - rect.left;
+        lastMouseY = e.clientY - rect.top;
+
+        if (mode === "block" && isMouseDown) {
+          spawnBlock(lastMouseX, lastMouseY);
+        }
       });
 
-      squaresBtn.addEventListener("click", () => {
-        mode = "squares";
-        squaresBtn.classList.add("active");
-        lettersBtn.classList.remove("active");
+      canvas.addEventListener("mousedown", () => {
+        isMouseDown = true;
+        if (mode === "block") {
+          spawnBlock(lastMouseX, lastMouseY);
+        }
       });
+
+      canvas.addEventListener("mouseup", () => {
+        isMouseDown = false;
+      });
+
+      function spawnBlock(x, y) {
+        const block = document.createElement("div");
+        block.className = "painted";
+        block.style.width = "30px";
+        block.style.height = "30px";
+        block.style.backgroundColor = "rgba(0,0,0,0.5)";
+        block.style.left = x + "px";
+        block.style.top = y + "px";
+        canvas.appendChild(block);
+      }
     </script>
   </body>
 </html>
