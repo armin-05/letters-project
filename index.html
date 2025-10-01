@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+    <head>
+          <meta charset="utf-8">
+          <title>but Letters</title>
+    </head>
+    <body>
+      <h1>but Letters: goon</h1>
+      <p> gooners or sth</p>
+      <div id="output"></div>
+      <script>
+        
+const outputEl = document.getElementById("output");
+//no changes yet aignt
+  // Listen for keydown events
+  document.addEventListener("keydown", function(event) {
+    console.log("Key pressed:", event.key);
+    // if key is backspace...
+    if (event.key === "Backspace") {
+      outputEl.textContent = outputEl.textContent.slice(0, -1);
+    } else {
+      outputEl.textContent += event.key;
+    }
+  });</script>
+    </body>
+</html>
