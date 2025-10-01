@@ -23,18 +23,31 @@
         overflow: hidden;
       }
 
-      #box span {
+      #box span, #box .square {
         position: absolute;
-        font-family: monospace;
         user-select: none;
-        pointer-events: none; /* letters don’t block the mouse */
+        pointer-events: none; /* so they don’t block mouse tracking */
+      }
+
+      #box span {
+        font-family: monospace;
+      }
+
+      #box .square {
+        width: 40px;
+        height: 40px;
+        background: #e2e2d0; /* slightly different color */
       }
 
       #controls {
         margin-top: 10px;
         width: 600px;
         display: flex;
-        justify-content: flex-end;
+        justify-content: space-between;
+      }
+
+      #size-controls, #mode-controls {
+        display: flex;
         gap: 10px;
       }
 
@@ -48,6 +61,10 @@
         border-radius: 4px;
       }
 
+      #controls button.active {
+        background: #bbb;
+      }
+
       #controls button:hover {
         background: #ddd;
       }
@@ -58,9 +75,15 @@
 
     <!-- Controls -->
     <div id="controls">
-      <button data-size="40">Normal</button>
-      <button data-size="100">Medium</button>
-      <button data-size="180">Big</button>
+      <div id="size-controls">
+        <button data-size="40">Normal</button>
+        <button data-size="100">Medium</button>
+        <button data-size="180">Big</button>
+      </div>
+      <div id="mode-controls">
+        <button id="lettersBtn" class="active">Letters Mode</button>
+        <button id="squaresBtn">Square Mode</button>
+      </div>
     </div>
 
     <script>
@@ -68,6 +91,7 @@
       let mouseX = 0;
       let mouseY = 0;
       let currentSize = 40; // default size (Normal)
+      let mode = "letters"; // can be "letters" or "squares"
 
       // Track mouse position inside the box
       box.addEventListener("mousemove", (e) => {
@@ -76,24 +100,56 @@
         mouseY = e.clientY - rect.top;
       });
 
-      // Place letters where the cursor is
+      // Place letters at cursor
       document.addEventListener("keydown", (event) => {
-        if (event.key.length === 1) { // Only letters/numbers/symbols
+        if (mode === "letters" && event.key.length === 1) {
           const letter = document.createElement("span");
           letter.textContent = event.key;
           letter.style.left = mouseX + "px";
           letter.style.top = mouseY + "px";
           letter.style.fontSize = currentSize + "px";
-          letter.style.transform = "translate(-50%, -50%)"; // center on cursor
+          letter.style.transform = "translate(-50%, -50%)";
           box.appendChild(letter);
         }
       });
 
+      // Place squares when clicking
+      box.addEventListener("click", (e) => {
+        if (mode === "squares") {
+          const square = document.createElement("div");
+          square.className = "square";
+          square.style.left = mouseX + "px";
+          square.style.top = mouseY + "px";
+          square.style.transform = "translate(-50%, -50%)";
+          box.appendChild(square);
+        }
+      });
+
       // Handle size buttons
-      document.querySelectorAll("#controls button").forEach((btn) => {
+      document.querySelectorAll("#size-controls button").forEach((btn) => {
         btn.addEventListener("click", () => {
           currentSize = parseInt(btn.dataset.size, 10);
+          document
+            .querySelectorAll("#size-controls button")
+            .forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
         });
+      });
+
+      // Handle mode buttons
+      const lettersBtn = document.getElementById("lettersBtn");
+      const squaresBtn = document.getElementById("squaresBtn");
+
+      lettersBtn.addEventListener("click", () => {
+        mode = "letters";
+        lettersBtn.classList.add("active");
+        squaresBtn.classList.remove("active");
+      });
+
+      squaresBtn.addEventListener("click", () => {
+        mode = "squares";
+        squaresBtn.classList.add("active");
+        lettersBtn.classList.remove("active");
       });
     </script>
   </body>
