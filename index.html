@@ -27,6 +27,7 @@
         position: absolute;
         font-family: monospace;
         user-select: none;
+        pointer-events: none; /* letters don’t block the mouse */
       }
 
       #controls {
@@ -57,16 +58,16 @@
 
     <!-- Controls -->
     <div id="controls">
-      <button data-size="20">Regular</button>
-      <button data-size="40">2x</button>
-      <button data-size="100">5x</button>
+      <button data-size="40">Normal</button>
+      <button data-size="100">Medium</button>
+      <button data-size="180">Big</button>
     </div>
 
     <script>
       const box = document.getElementById("box");
       let mouseX = 0;
       let mouseY = 0;
-      let currentSize = 20; // default size
+      let currentSize = 40; // default size (Normal)
 
       // Track mouse position inside the box
       box.addEventListener("mousemove", (e) => {
@@ -83,6 +84,7 @@
           letter.style.left = mouseX + "px";
           letter.style.top = mouseY + "px";
           letter.style.fontSize = currentSize + "px";
+          letter.style.transform = "translate(-50%, -50%)"; // center on cursor
           box.appendChild(letter);
         }
       });
