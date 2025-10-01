@@ -30,6 +30,7 @@
         position: absolute;
         pointer-events: none;
         opacity: 0.7; /* looks painted */
+        transform: translate(-50%, -50%); /* center at cursor */
       }
 
       /* Controls */
@@ -128,8 +129,9 @@
       function spawnBlock(x, y) {
         const block = document.createElement("div");
         block.className = "painted";
-        block.style.width = "30px";
-        block.style.height = "30px";
+        const size = 15 * textSize; // size scales with the text multiplier
+        block.style.width = size + "px";
+        block.style.height = size + "px";
         block.style.backgroundColor = "rgba(220,220,200,0.7)"; // slightly off-white
         block.style.left = x + "px";
         block.style.top = y + "px";
