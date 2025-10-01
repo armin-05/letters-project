@@ -7,21 +7,25 @@
       body {
         background: #ccc;
         display: flex;
-        justify-content: center;
+        flex-direction: column;
         align-items: center;
+        margin: 0;
         height: 100vh;
+        justify-content: center;
       }
 
+      /* Canvas (the off-white wall) */
       #canvas {
-        width: 1200px;   /* bigger wall */
+        width: 1200px;
         height: 700px;
         border: 3px solid black;
-        position: relative;
         background: #f8f8f0; /* off-white wall */
-        overflow: hidden;    /* keeps content inside the square */
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 15px; /* space for controls */
       }
 
-      /* Common paint style */
+      /* Common painted items (text or blocks) */
       .painted {
         position: absolute;
         pointer-events: none;
@@ -30,11 +34,15 @@
 
       /* Controls */
       #controls {
-        position: absolute;
-        bottom: -60px;
-        right: 0;
         display: flex;
-        gap: 15px;
+        justify-content: flex-end;
+        gap: 20px;
+        width: 1200px; /* same width as canvas */
+      }
+
+      #size-controls, #mode-controls {
+        display: flex;
+        gap: 10px;
       }
 
       .btn {
@@ -43,6 +51,7 @@
         border: 1px solid #333;
         cursor: pointer;
         user-select: none;
+        font-family: sans-serif;
       }
 
       .btn:hover {
@@ -51,25 +60,28 @@
     </style>
   </head>
   <body>
-    <div id="canvas">
-      <div id="controls">
-        <div>
-          <span class="btn" onclick="setSize(2)">Normal</span>
-          <span class="btn" onclick="setSize(5)">Medium</span>
-          <span class="btn" onclick="setSize(9)">Big</span>
-        </div>
-        <div>
-          <span class="btn" onclick="setMode('text')">Text</span>
-          <span class="btn" onclick="setMode('block')">Paint Roller</span>
-        </div>
+    <div id="canvas"></div>
+
+    <!-- Controls outside the canvas -->
+    <div id="controls">
+      <div id="size-controls">
+        <span class="btn" onclick="setSize(2)">Normal</span>
+        <span class="btn" onclick="setSize(5)">Medium</span>
+        <span class="btn" onclick="setSize(9)">Big</span>
+      </div>
+      <div id="mode-controls">
+        <span class="btn" onclick="setMode('text')">Text</span>
+        <span class="btn" onclick="setMode('block')">Paint Roller</span>
       </div>
     </div>
 
     <script>
       const canvas = document.getElementById("canvas");
-      let textSize = 2; // default normal
-      let mode = "text";
+      let textSize = 2;       // default size multiplier
+      let mode = "text";      // current mode
       let isMouseDown = false;
+      let lastMouseX = 0;
+      let lastMouseY = 0;
 
       function setSize(multiplier) {
         textSize = multiplier;
@@ -79,27 +91,13 @@
         mode = m;
       }
 
-      // Handle text placement
-      document.addEventListener("keydown", (event) => {
-        if (mode === "text" && event.key.length === 1 && insideCanvas()) {
-          const span = document.createElement("span");
-          span.textContent = event.key;
-          span.className = "painted";
-          span.style.fontSize = `${textSize}em`;
-          span.style.left = lastMouseX + "px";
-          span.style.top = lastMouseY + "px";
-          canvas.appendChild(span);
-        }
-      });
-
-      let lastMouseX = 0;
-      let lastMouseY = 0;
-
+      // Track mouse inside canvas
       canvas.addEventListener("mousemove", (e) => {
         const rect = canvas.getBoundingClientRect();
         lastMouseX = e.clientX - rect.left;
         lastMouseY = e.clientY - rect.top;
 
+        // Paint roller continuous placement
         if (mode === "block" && isMouseDown && insideCanvas()) {
           spawnBlock(lastMouseX, lastMouseY);
         }
@@ -116,6 +114,7 @@
         isMouseDown = false;
       });
 
+      // Only place inside canvas
       function insideCanvas() {
         return (
           lastMouseX >= 0 &&
@@ -125,16 +124,30 @@
         );
       }
 
+      // Spawn a paint roller block
       function spawnBlock(x, y) {
         const block = document.createElement("div");
         block.className = "painted";
         block.style.width = "30px";
         block.style.height = "30px";
-        block.style.backgroundColor = "rgba(220,220,200,0.7)"; /* slightly off-white */
+        block.style.backgroundColor = "rgba(220,220,200,0.7)"; // slightly off-white
         block.style.left = x + "px";
         block.style.top = y + "px";
         canvas.appendChild(block);
       }
+
+      // Place text
+      document.addEventListener("keydown", (event) => {
+        if (mode === "text" && event.key.length === 1 && insideCanvas()) {
+          const span = document.createElement("span");
+          span.textContent = event.key;
+          span.className = "painted";
+          span.style.fontSize = `${textSize}em`;
+          span.style.left = lastMouseX + "px";
+          span.style.top = lastMouseY + "px";
+          canvas.appendChild(span);
+        }
+      });
     </script>
   </body>
 </html>
