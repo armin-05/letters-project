@@ -14,33 +14,17 @@
 
       #canvas {
         width: 1200px;   /* bigger wall */
-        height: 700px;   /* bigger wall */
+        height: 700px;
         border: 3px solid black;
         position: relative;
-        /* CSS "brick wall" look */
-        background:
-          repeating-linear-gradient(
-            0deg,
-            #d2691e,
-            #d2691e 40px,
-            #b55217 40px,
-            #b55217 42px
-          ),
-          repeating-linear-gradient(
-            90deg,
-            #d2691e,
-            #d2691e 100px,
-            #a94d15 100px,
-            #a94d15 102px
-          );
-        background-size: 100px 42px;
+        background: #f8f8f0; /* off-white wall */
+        overflow: hidden;    /* keeps content inside the square */
       }
 
       /* Common paint style */
       .painted {
         position: absolute;
         pointer-events: none;
-        mix-blend-mode: multiply;
         opacity: 0.7; /* looks painted */
       }
 
@@ -97,12 +81,11 @@
 
       // Handle text placement
       document.addEventListener("keydown", (event) => {
-        if (mode === "text" && event.key.length === 1) {
+        if (mode === "text" && event.key.length === 1 && insideCanvas()) {
           const span = document.createElement("span");
           span.textContent = event.key;
           span.className = "painted";
           span.style.fontSize = `${textSize}em`;
-
           span.style.left = lastMouseX + "px";
           span.style.top = lastMouseY + "px";
           canvas.appendChild(span);
@@ -117,14 +100,14 @@
         lastMouseX = e.clientX - rect.left;
         lastMouseY = e.clientY - rect.top;
 
-        if (mode === "block" && isMouseDown) {
+        if (mode === "block" && isMouseDown && insideCanvas()) {
           spawnBlock(lastMouseX, lastMouseY);
         }
       });
 
       canvas.addEventListener("mousedown", () => {
         isMouseDown = true;
-        if (mode === "block") {
+        if (mode === "block" && insideCanvas()) {
           spawnBlock(lastMouseX, lastMouseY);
         }
       });
@@ -133,12 +116,21 @@
         isMouseDown = false;
       });
 
+      function insideCanvas() {
+        return (
+          lastMouseX >= 0 &&
+          lastMouseY >= 0 &&
+          lastMouseX <= canvas.clientWidth &&
+          lastMouseY <= canvas.clientHeight
+        );
+      }
+
       function spawnBlock(x, y) {
         const block = document.createElement("div");
         block.className = "painted";
         block.style.width = "30px";
         block.style.height = "30px";
-        block.style.backgroundColor = "rgba(0,0,0,0.5)";
+        block.style.backgroundColor = "rgba(220,220,200,0.7)"; /* slightly off-white */
         block.style.left = x + "px";
         block.style.top = y + "px";
         canvas.appendChild(block);
