@@ -13,7 +13,7 @@
 function playSound(url) {
   const audio = new Audio(url);
   audio.play();
-}      
+};      
 
 
 // find the #output element
@@ -33,7 +33,7 @@ function playSound(url) {
     }
     outputEl.appendChild(el);
     return el;
-  }
+  };
 
   // Listen for keydown events
   document.addEventListener("keydown", function(event) {
@@ -57,7 +57,7 @@ function playSound(url) {
       playSound("https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg");
       addDomElement("span", { text: "(sound played)" });}
     else {addDomElement("span", { text: event.key })};
-  };
+  });
       </script>
     </body>
 </html>
