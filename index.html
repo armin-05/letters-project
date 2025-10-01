@@ -11,6 +11,7 @@
         justify-content: center;
         align-items: center;
         background: #333;
+        flex-direction: column;
       }
 
       #box {
@@ -24,19 +25,48 @@
 
       #box span {
         position: absolute;
-        font-size: 20px;
         font-family: monospace;
         user-select: none;
+      }
+
+      #controls {
+        margin-top: 10px;
+        width: 600px;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+      }
+
+      #controls button {
+        padding: 5px 10px;
+        border: 1px solid #222;
+        background: #eee;
+        cursor: pointer;
+        font-family: sans-serif;
+        font-size: 14px;
+        border-radius: 4px;
+      }
+
+      #controls button:hover {
+        background: #ddd;
       }
     </style>
   </head>
   <body>
     <div id="box"></div>
 
+    <!-- Controls -->
+    <div id="controls">
+      <button data-size="20">Regular</button>
+      <button data-size="40">2x</button>
+      <button data-size="100">5x</button>
+    </div>
+
     <script>
       const box = document.getElementById("box");
       let mouseX = 0;
       let mouseY = 0;
+      let currentSize = 20; // default size
 
       // Track mouse position inside the box
       box.addEventListener("mousemove", (e) => {
@@ -52,8 +82,16 @@
           letter.textContent = event.key;
           letter.style.left = mouseX + "px";
           letter.style.top = mouseY + "px";
+          letter.style.fontSize = currentSize + "px";
           box.appendChild(letter);
         }
+      });
+
+      // Handle size buttons
+      document.querySelectorAll("#controls button").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          currentSize = parseInt(btn.dataset.size, 10);
+        });
       });
     </script>
   </body>
