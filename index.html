@@ -23,10 +23,11 @@
         overflow: hidden;
       }
 
-      #box span, #box .square {
+      #box span,
+      #box .square {
         position: absolute;
         user-select: none;
-        pointer-events: none; /* so they don’t block mouse tracking */
+        pointer-events: none;
       }
 
       #box span {
@@ -46,7 +47,8 @@
         justify-content: space-between;
       }
 
-      #size-controls, #mode-controls {
+      #size-controls,
+      #mode-controls {
         display: flex;
         gap: 10px;
       }
@@ -91,13 +93,19 @@
       let mouseX = 0;
       let mouseY = 0;
       let currentSize = 40; // default size (Normal)
-      let mode = "letters"; // can be "letters" or "squares"
+      let mode = "letters"; // "letters" or "squares"
+      let painting = false; // track paint roller state
 
       // Track mouse position inside the box
       box.addEventListener("mousemove", (e) => {
         const rect = box.getBoundingClientRect();
         mouseX = e.clientX - rect.left;
         mouseY = e.clientY - rect.top;
+
+        // If painting in square mode, drop squares continuously
+        if (mode === "squares" && painting) {
+          spawnSquare(mouseX, mouseY);
+        }
       });
 
       // Place letters at cursor
@@ -113,17 +121,32 @@
         }
       });
 
-      // Place squares when clicking
-      box.addEventListener("click", (e) => {
+      // Paint roller events
+      box.addEventListener("mousedown", () => {
         if (mode === "squares") {
-          const square = document.createElement("div");
-          square.className = "square";
-          square.style.left = mouseX + "px";
-          square.style.top = mouseY + "px";
-          square.style.transform = "translate(-50%, -50%)";
-          box.appendChild(square);
+          painting = true;
+          spawnSquare(mouseX, mouseY);
         }
       });
+
+      box.addEventListener("mouseup", () => {
+        painting = false;
+      });
+
+      box.addEventListener("mouseleave", () => {
+        painting = false; // stop painting if cursor leaves box
+      });
+
+      function spawnSquare(x, y) {
+        const square = document.createElement("div");
+        square.className = "square";
+        square.style.width = currentSize + "px";
+        square.style.height = currentSize + "px";
+        square.style.left = x + "px";
+        square.style.top = y + "px";
+        square.style.transform = "translate(-50%, -50%)";
+        box.appendChild(square);
+      }
 
       // Handle size buttons
       document.querySelectorAll("#size-controls button").forEach((btn) => {
