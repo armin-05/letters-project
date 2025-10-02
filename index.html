@@ -29,7 +29,13 @@
         border: 2px solid #333;
         position: absolute;
         top: 0;
-        transition: transform 0.3s ease;
+        transition: transform 0.3s ease, left 0.3s ease;
+        transform: rotateY(45deg) scale(0.9); /* default angled look */
+      }
+
+      .palette-square.selected {
+        transform: none; /* flat when selected */
+        z-index: 10;     /* bring on top */
       }
 
       /* Canvas (the off-white wall) */
@@ -145,12 +151,20 @@
         selectedSquare = index;
 
         squares.forEach((sq, i) => {
-          sq.style.transform = "translateX(0)";
+          sq.classList.remove("selected");
+          // reset
+          sq.style.left = `${i * 25}px`;
+          sq.style.transform = "rotateY(45deg) scale(0.9)";
+
+          if (i === index) {
+            sq.classList.add("selected");
+            sq.style.transform = "none"; // flat, normal
+          }
           if (i === index - 1) {
-            sq.style.transform = "translateX(-20px)"; // left neighbor moves left
+            sq.style.left = `${i * 25 - 50}px`; // shift left more (blank space)
           }
           if (i === index + 1) {
-            sq.style.transform = "translateX(20px)"; // right neighbor moves right
+            sq.style.left = `${i * 25 + 50}px`; // shift right more (blank space)
           }
         });
       }
