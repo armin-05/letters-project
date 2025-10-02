@@ -11,7 +11,25 @@
         align-items: center;
         margin: 0;
         height: 100vh;
-        justify-content: center;
+        justify-content: flex-start;
+      }
+
+      /* === Palette of 10 squares === */
+      #palette {
+        display: none; /* hidden by default */
+        position: relative;
+        margin: 15px;
+        height: 60px;
+      }
+
+      .palette-square {
+        width: 50px;
+        height: 50px;
+        background: #aaa;
+        border: 2px solid #333;
+        position: absolute;
+        top: 0;
+        transition: transform 0.3s ease;
       }
 
       /* Canvas (the off-white wall) */
@@ -39,6 +57,7 @@
         justify-content: flex-end;
         gap: 20px;
         width: 1200px; /* same width as canvas */
+        margin-bottom: 10px;
       }
 
       #size-controls, #mode-controls {
@@ -61,6 +80,10 @@
     </style>
   </head>
   <body>
+    <!-- Palette (10 stacked squares) -->
+    <div id="palette"></div>
+
+    <!-- Canvas -->
     <div id="canvas"></div>
 
     <!-- Controls outside the canvas -->
@@ -78,12 +101,63 @@
 
     <script>
       const canvas = document.getElementById("canvas");
+      const palette = document.getElementById("palette");
+
       let textSize = 2;       // default size multiplier
       let mode = "text";      // current mode
       let isMouseDown = false;
       let lastMouseX = 0;
       let lastMouseY = 0;
+      let paletteVisible = false;
+      let selectedSquare = -1;
 
+      /* =========================
+         PALETTE INITIALIZATION
+      ========================== */
+      const squares = [];
+      for (let i = 0; i < 10; i++) {
+        const sq = document.createElement("div");
+        sq.className = "palette-square";
+        sq.style.left = `${i * 25}px`; // overlap shift
+        palette.appendChild(sq);
+        squares.push(sq);
+      }
+
+      // Toggle palette on `
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "`") {
+          paletteVisible = !paletteVisible;
+          palette.style.display = paletteVisible ? "block" : "none";
+        }
+
+        // Select square with 1-0
+        if (paletteVisible) {
+          if (e.key >= "1" && e.key <= "9") {
+            selectSquare(parseInt(e.key) - 1);
+          }
+          if (e.key === "0") {
+            selectSquare(9);
+          }
+        }
+      });
+
+      function selectSquare(index) {
+        selectedSquare = index;
+
+        squares.forEach((sq, i) => {
+          sq.style.transform = "translateX(0)";
+          if (i === index - 1) {
+            sq.style.transform = "translateX(-20px)"; // left neighbor moves left
+          }
+          if (i === index + 1) {
+            sq.style.transform = "translateX(20px)"; // right neighbor moves right
+          }
+        });
+      }
+
+      /* =========================
+         SIZE & MODE CONTROLS
+      ========================== */
       function setSize(multiplier) {
         textSize = multiplier;
       }
@@ -92,7 +166,9 @@
         mode = m;
       }
 
-      // Track mouse inside canvas
+      /* =========================
+         CANVAS INTERACTION
+      ========================== */
       canvas.addEventListener("mousemove", (e) => {
         const rect = canvas.getBoundingClientRect();
         lastMouseX = e.clientX - rect.left;
@@ -115,7 +191,6 @@
         isMouseDown = false;
       });
 
-      // Only place inside canvas
       function insideCanvas() {
         return (
           lastMouseX >= 0 &&
@@ -125,11 +200,10 @@
         );
       }
 
-      // Spawn a paint roller block
       function spawnBlock(x, y) {
         const block = document.createElement("div");
         block.className = "painted";
-        const size = 15 * textSize; // size scales with the text multiplier
+        const size = 15 * textSize; // size scales with text multiplier
         block.style.width = size + "px";
         block.style.height = size + "px";
         block.style.backgroundColor = "rgba(220,220,200,0.7)"; // slightly off-white
@@ -138,7 +212,6 @@
         canvas.appendChild(block);
       }
 
-      // Place text
       document.addEventListener("keydown", (event) => {
         if (mode === "text" && event.key.length === 1 && insideCanvas()) {
           const span = document.createElement("span");
