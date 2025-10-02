@@ -18,24 +18,24 @@
       #palette {
         display: none; /* hidden by default */
         position: relative;
-        margin: 15px;
-        height: 60px;
+        margin: 10px;
+        height: 100px;
       }
 
       .palette-square {
-        width: 50px;
-        height: 50px;
+        width: 80px;
+        height: 80px;
         background: #aaa;
         border: 2px solid #333;
         position: absolute;
         top: 0;
         transition: transform 0.3s ease, left 0.3s ease;
-        transform: rotateY(45deg) scale(0.9); /* default angled look */
+        transform: rotateY(45deg) scale(0.9); /* angled by default */
       }
 
       .palette-square.selected {
-        transform: none; /* flat when selected */
-        z-index: 10;     /* bring on top */
+        transform: none; /* flat */
+        z-index: 10;
       }
 
       /* Canvas (the off-white wall) */
@@ -54,7 +54,7 @@
         position: absolute;
         pointer-events: none;
         opacity: 0.7; /* looks painted */
-        transform: translate(-50%, -50%); /* center at cursor */
+        transform: translate(-50%, -50%);
       }
 
       /* Controls */
@@ -109,8 +109,8 @@
       const canvas = document.getElementById("canvas");
       const palette = document.getElementById("palette");
 
-      let textSize = 2;       // default size multiplier
-      let mode = "text";      // current mode
+      let textSize = 2;
+      let mode = "text";
       let isMouseDown = false;
       let lastMouseX = 0;
       let lastMouseY = 0;
@@ -124,7 +124,6 @@
       for (let i = 0; i < 10; i++) {
         const sq = document.createElement("div");
         sq.className = "palette-square";
-        sq.style.left = `${i * 25}px`; // overlap shift
         palette.appendChild(sq);
         squares.push(sq);
       }
@@ -134,6 +133,7 @@
         if (e.key === "`") {
           paletteVisible = !paletteVisible;
           palette.style.display = paletteVisible ? "block" : "none";
+          if (paletteVisible) layoutPalette();
         }
 
         // Select square with 1-0
@@ -147,24 +147,31 @@
         }
       });
 
+      function layoutPalette() {
+        const totalWidth = 10 * 40; // base offset (40px per square overlapping)
+        palette.style.width = totalWidth + "px";
+      }
+
       function selectSquare(index) {
         selectedSquare = index;
 
+        const baseLeft = 200; // center shift offset
+
         squares.forEach((sq, i) => {
           sq.classList.remove("selected");
-          // reset
-          sq.style.left = `${i * 25}px`;
-          sq.style.transform = "rotateY(45deg) scale(0.9)";
-
-          if (i === index) {
+          if (i < index) {
+            // all left ones shift to left
+            sq.style.left = baseLeft + (i - index) * 50 + "px";
+            sq.style.transform = "rotateY(45deg) scale(0.9)";
+          } else if (i > index) {
+            // all right ones shift to right
+            sq.style.left = baseLeft + (i - index) * 50 + "px";
+            sq.style.transform = "rotateY(45deg) scale(0.9)";
+          } else {
+            // selected stays in middle
+            sq.style.left = baseLeft + "px";
             sq.classList.add("selected");
-            sq.style.transform = "none"; // flat, normal
-          }
-          if (i === index - 1) {
-            sq.style.left = `${i * 25 - 50}px`; // shift left more (blank space)
-          }
-          if (i === index + 1) {
-            sq.style.left = `${i * 25 + 50}px`; // shift right more (blank space)
+            sq.style.transform = "none";
           }
         });
       }
@@ -188,7 +195,6 @@
         lastMouseX = e.clientX - rect.left;
         lastMouseY = e.clientY - rect.top;
 
-        // Paint roller continuous placement
         if (mode === "block" && isMouseDown && insideCanvas()) {
           spawnBlock(lastMouseX, lastMouseY);
         }
@@ -217,10 +223,10 @@
       function spawnBlock(x, y) {
         const block = document.createElement("div");
         block.className = "painted";
-        const size = 15 * textSize; // size scales with text multiplier
+        const size = 15 * textSize;
         block.style.width = size + "px";
         block.style.height = size + "px";
-        block.style.backgroundColor = "rgba(220,220,200,0.7)"; // slightly off-white
+        block.style.backgroundColor = "rgba(220,220,200,0.7)";
         block.style.left = x + "px";
         block.style.top = y + "px";
         canvas.appendChild(block);
