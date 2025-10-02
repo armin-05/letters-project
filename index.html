@@ -30,7 +30,7 @@
         position: absolute;
         top: 0;
         transition: transform 0.3s ease, left 0.3s ease;
-        transform: rotateY(45deg) scale(0.9); /* angled by default */
+        transform: rotateY(40deg) scale(0.9); /* angled default */
       }
 
       .palette-square.selected {
@@ -148,25 +148,26 @@
       });
 
       function layoutPalette() {
-        const totalWidth = 10 * 40; // base offset (40px per square overlapping)
+        const totalWidth = 10 * 40; // base offset (overlapping look)
         palette.style.width = totalWidth + "px";
       }
 
       function selectSquare(index) {
         selectedSquare = index;
 
-        const baseLeft = 200; // center shift offset
+        const baseLeft = 500; // shift center horizontally
+        const spread = 100;   // spacing between blocks when spread
 
         squares.forEach((sq, i) => {
           sq.classList.remove("selected");
           if (i < index) {
-            // all left ones shift to left
-            sq.style.left = baseLeft + (i - index) * 50 + "px";
-            sq.style.transform = "rotateY(45deg) scale(0.9)";
+            // all left ones spread left
+            sq.style.left = baseLeft - (index - i) * spread + "px";
+            sq.style.transform = "rotateY(40deg) scale(0.9)";
           } else if (i > index) {
-            // all right ones shift to right
-            sq.style.left = baseLeft + (i - index) * 50 + "px";
-            sq.style.transform = "rotateY(45deg) scale(0.9)";
+            // all right ones spread right
+            sq.style.left = baseLeft + (i - index) * spread + "px";
+            sq.style.transform = "rotateY(40deg) scale(0.9)";
           } else {
             // selected stays in middle
             sq.style.left = baseLeft + "px";
