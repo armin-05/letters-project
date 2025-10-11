@@ -1,249 +1,270 @@
-<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title>Paint Wall</title>
-    <style>
-      body {
-        background: #ccc;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        margin: 0;
-        height: 100vh;
-        justify-content: flex-start;
-      }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Weather Composer</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    height: 100%;
+    background: #87ceeb; /* sky blue */
+    font-family: sans-serif;
+    user-select: none;
+  }
+  canvas {
+    display: block;
+  }
+  #instructions {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(255,255,255,0.7);
+    padding: 10px;
+    border-radius: 8px;
+  }
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<div id="instructions">
+  <b>Weather Composer Controls:</b><br>
+  W = Wind / gust<br>
+  C = Clouds (hold for denser clouds)<br>
+  R = Rain toggle<br>
+  S = Snow toggle<br>
+  T = Thunder / lightning<br>
+  M = Mist / fog<br>
+  Mouse = Position weather effects<br>
+  Click = Local storm spawn
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
 
-      /* === Palette of 10 squares === */
-      #palette {
-        display: none; /* hidden by default */
-        position: relative;
-        margin: 10px;
-        height: 100px;
-      }
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
-      .palette-square {
-        width: 80px;
-        height: 80px;
-        background: #aaa;
-        border: 2px solid #333;
-        position: absolute;
-        top: 0;
-        transition: transform 0.3s ease, left 0.3s ease;
-        transform: rotateY(40deg) scale(0.9); /* angled default */
-      }
+window.addEventListener('resize', () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
 
-      .palette-square.selected {
-        transform: none; /* flat */
-        z-index: 10;
-      }
+// Weather state
+let wind = 0;
+let cloudDensity = 0;
+let rain = false;
+let snow = false;
+let mist = false;
+let lightning = false;
 
-      /* Canvas (the off-white wall) */
-      #canvas {
-        width: 1200px;
-        height: 700px;
-        border: 3px solid black;
-        background: #f8f8f0; /* off-white wall */
-        position: relative;
-        overflow: hidden;
-        margin-bottom: 15px; /* space for controls */
-      }
+// Particles
+const clouds = [];
+const raindrops = [];
+const snowflakes = [];
+const mists = [];
+const storms = [];
 
-      /* Common painted items (text or blocks) */
-      .painted {
-        position: absolute;
-        pointer-events: none;
-        opacity: 0.7; /* looks painted */
-        transform: translate(-50%, -50%);
-      }
+// Helpers
+function random(min,max){return Math.random()*(max-min)+min;}
 
-      /* Controls */
-      #controls {
-        display: flex;
-        justify-content: flex-end;
-        gap: 20px;
-        width: 1200px; /* same width as canvas */
-        margin-bottom: 10px;
-      }
+// Cloud particle
+class Cloud {
+  constructor(x,y,size){
+    this.x = x;
+    this.y = y;
+    this.size = size;
+    this.speed = random(0.2,0.7);
+  }
+  update(){
+    this.x += this.speed + wind;
+    if(this.x > canvas.width+100) this.x = -100;
+  }
+  draw(){
+    ctx.fillStyle = `rgba(255,255,255,0.5)`;
+    ctx.beginPath();
+    ctx.ellipse(this.x,this.y,this.size*2,this.size,0,0,2*Math.PI);
+    ctx.fill();
+  }
+}
 
-      #size-controls, #mode-controls {
-        display: flex;
-        gap: 10px;
-      }
+// Rain particle
+class Rain {
+  constructor(x,y){
+    this.x = x;
+    this.y = y;
+    this.speed = random(4,8);
+  }
+  update(){
+    this.y += this.speed;
+    this.x += wind*0.5;
+    if(this.y>canvas.height) this.y = random(-100,0);
+  }
+  draw(){
+    ctx.strokeStyle='rgba(173,216,230,0.7)';
+    ctx.beginPath();
+    ctx.moveTo(this.x,this.y);
+    ctx.lineTo(this.x,this.y+10);
+    ctx.stroke();
+  }
+}
 
-      .btn {
-        padding: 5px 10px;
-        background: #eee;
-        border: 1px solid #333;
-        cursor: pointer;
-        user-select: none;
-        font-family: sans-serif;
-      }
+// Snow particle
+class Snow {
+  constructor(x,y){
+    this.x = x;
+    this.y = y;
+    this.speed = random(1,3);
+    this.angle = random(0,Math.PI*2);
+  }
+  update(){
+    this.y += this.speed;
+    this.x += Math.sin(this.angle)+wind*0.2;
+    this.angle += 0.01;
+    if(this.y>canvas.height) this.y=random(-50,0);
+  }
+  draw(){
+    ctx.fillStyle='rgba(255,255,255,0.9)';
+    ctx.beginPath();
+    ctx.arc(this.x,this.y,2,0,Math.PI*2);
+    ctx.fill();
+  }
+}
 
-      .btn:hover {
-        background: #ddd;
-      }
-    </style>
-  </head>
-  <body>
-    <!-- Palette (10 stacked squares) -->
-    <div id="palette"></div>
+// Mist particle
+class Mist {
+  constructor(x,y){
+    this.x = x;
+    this.y = y;
+    this.alpha = random(0.1,0.3);
+    this.radius = random(20,50);
+  }
+  update(){
+    this.x += wind*0.1;
+    this.y -= 0.1;
+  }
+  draw(){
+    ctx.fillStyle=`rgba(200,200,200,${this.alpha})`;
+    ctx.beginPath();
+    ctx.arc(this.x,this.y,this.radius,0,Math.PI*2);
+    ctx.fill();
+  }
+}
 
-    <!-- Canvas -->
-    <div id="canvas"></div>
+// Lightning
+function flashLightning(){
+  lightning = true;
+  setTimeout(()=>lightning=false,100);
+}
 
-    <!-- Controls outside the canvas -->
-    <div id="controls">
-      <div id="size-controls">
-        <span class="btn" onclick="setSize(2)">Normal</span>
-        <span class="btn" onclick="setSize(5)">Medium</span>
-        <span class="btn" onclick="setSize(9)">Big</span>
-      </div>
-      <div id="mode-controls">
-        <span class="btn" onclick="setMode('text')">Text</span>
-        <span class="btn" onclick="setMode('block')">Paint Roller</span>
-      </div>
-    </div>
+// Storm spawn (on click)
+class Storm {
+  constructor(x,y){
+    this.x = x;
+    this.y = y;
+    this.radius = 0;
+  }
+  update(){
+    this.radius += 2;
+    if(this.radius>150){
+      this.radius = 0;
+    }
+  }
+  draw(){
+    ctx.fillStyle=`rgba(255,255,0,0.2)`;
+    ctx.beginPath();
+    ctx.arc(this.x,this.y,this.radius,0,2*Math.PI);
+    ctx.fill();
+  }
+}
 
-    <script>
-      const canvas = document.getElementById("canvas");
-      const palette = document.getElementById("palette");
+// Generate clouds initially
+for(let i=0;i<30;i++){
+  clouds.push(new Cloud(random(0,canvas.width),random(0,canvas.height/2),random(20,50)));
+}
 
-      let textSize = 2;
-      let mode = "text";
-      let isMouseDown = false;
-      let lastMouseX = 0;
-      let lastMouseY = 0;
-      let paletteVisible = false;
-      let selectedSquare = -1;
+// Event listeners
+document.addEventListener('keydown', e=>{
+  const key = e.key.toUpperCase();
+  switch(key){
+    case 'W': wind += 0.1; break;
+    case 'C': cloudDensity = Math.min(cloudDensity + 0.05, 1); break;
+    case 'R': rain = !rain; break;
+    case 'S': snow = !snow; break;
+    case 'T': flashLightning(); break;
+    case 'M': mist = !mist; break;
+  }
+});
 
-      /* =========================
-         PALETTE INITIALIZATION
-      ========================== */
-      const squares = [];
-      for (let i = 0; i < 10; i++) {
-        const sq = document.createElement("div");
-        sq.className = "palette-square";
-        palette.appendChild(sq);
-        squares.push(sq);
-      }
+canvas.addEventListener('click', e=>{
+  storms.push(new Storm(e.clientX,e.clientY));
+});
 
-      // Toggle palette on `
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "`") {
-          paletteVisible = !paletteVisible;
-          palette.style.display = paletteVisible ? "block" : "none";
-          if (paletteVisible) layoutPalette();
-        }
+// Animation loop
+function animate(){
+  // Background color based on weather
+  let skyR = 135-cloudDensity*60-lightning*80;
+  let skyG = 206-cloudDensity*60-lightning*80;
+  let skyB = 235-cloudDensity*40-lightning*80;
+  ctx.fillStyle = `rgb(${skyR},${skyG},${skyB})`;
+  ctx.fillRect(0,0,canvas.width,canvas.height);
 
-        // Select square with 1-0
-        if (paletteVisible) {
-          if (e.key >= "1" && e.key <= "9") {
-            selectSquare(parseInt(e.key) - 1);
-          }
-          if (e.key === "0") {
-            selectSquare(9);
-          }
-        }
-      });
+  // Draw clouds
+  for(let i=0;i<clouds.length;i++){
+    clouds[i].update();
+    clouds[i].draw();
+  }
 
-      function layoutPalette() {
-        const totalWidth = 10 * 40; // base offset (overlapping look)
-        palette.style.width = totalWidth + "px";
-      }
+  // Draw rain
+  if(rain){
+    while(raindrops.length<300){
+      raindrops.push(new Rain(random(0,canvas.width),random(-canvas.height,0)));
+    }
+    raindrops.forEach(r=>{
+      r.update();
+      r.draw();
+    });
+  }
 
-      function selectSquare(index) {
-        selectedSquare = index;
+  // Draw snow
+  if(snow){
+    while(snowflakes.length<150){
+      snowflakes.push(new Snow(random(0,canvas.width),random(-canvas.height,0)));
+    }
+    snowflakes.forEach(s=>{
+      s.update();
+      s.draw();
+    });
+  }
 
-        const baseLeft = 500; // shift center horizontally
-        const spread = 100;   // spacing between blocks when spread
+  // Draw mist
+  if(mist){
+    while(mists.length<50){
+      mists.push(new Mist(random(0,canvas.width),canvas.height));
+    }
+    mists.forEach(m=>{
+      m.update();
+      m.draw();
+    });
+  }
 
-        squares.forEach((sq, i) => {
-          sq.classList.remove("selected");
-          if (i < index) {
-            // all left ones spread left
-            sq.style.left = baseLeft - (index - i) * spread + "px";
-            sq.style.transform = "rotateY(40deg) scale(0.9)";
-          } else if (i > index) {
-            // all right ones spread right
-            sq.style.left = baseLeft + (i - index) * spread + "px";
-            sq.style.transform = "rotateY(40deg) scale(0.9)";
-          } else {
-            // selected stays in middle
-            sq.style.left = baseLeft + "px";
-            sq.classList.add("selected");
-            sq.style.transform = "none";
-          }
-        });
-      }
+  // Draw storms
+  storms.forEach(s=>{
+    s.update();
+    s.draw();
+  });
 
-      /* =========================
-         SIZE & MODE CONTROLS
-      ========================== */
-      function setSize(multiplier) {
-        textSize = multiplier;
-      }
+  // Lightning flash
+  if(lightning){
+    ctx.fillStyle='rgba(255,255,255,0.3)';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+  }
 
-      function setMode(m) {
-        mode = m;
-      }
+  requestAnimationFrame(animate);
+}
 
-      /* =========================
-         CANVAS INTERACTION
-      ========================== */
-      canvas.addEventListener("mousemove", (e) => {
-        const rect = canvas.getBoundingClientRect();
-        lastMouseX = e.clientX - rect.left;
-        lastMouseY = e.clientY - rect.top;
-
-        if (mode === "block" && isMouseDown && insideCanvas()) {
-          spawnBlock(lastMouseX, lastMouseY);
-        }
-      });
-
-      canvas.addEventListener("mousedown", () => {
-        isMouseDown = true;
-        if (mode === "block" && insideCanvas()) {
-          spawnBlock(lastMouseX, lastMouseY);
-        }
-      });
-
-      canvas.addEventListener("mouseup", () => {
-        isMouseDown = false;
-      });
-
-      function insideCanvas() {
-        return (
-          lastMouseX >= 0 &&
-          lastMouseY >= 0 &&
-          lastMouseX <= canvas.clientWidth &&
-          lastMouseY <= canvas.clientHeight
-        );
-      }
-
-      function spawnBlock(x, y) {
-        const block = document.createElement("div");
-        block.className = "painted";
-        const size = 15 * textSize;
-        block.style.width = size + "px";
-        block.style.height = size + "px";
-        block.style.backgroundColor = "rgba(220,220,200,0.7)";
-        block.style.left = x + "px";
-        block.style.top = y + "px";
-        canvas.appendChild(block);
-      }
-
-      document.addEventListener("keydown", (event) => {
-        if (mode === "text" && event.key.length === 1 && insideCanvas()) {
-          const span = document.createElement("span");
-          span.textContent = event.key;
-          span.className = "painted";
-          span.style.fontSize = `${textSize}em`;
-          span.style.left = lastMouseX + "px";
-          span.style.top = lastMouseY + "px";
-          canvas.appendChild(span);
-        }
-      });
-    </script>
-  </body>
+animate();
+</script>
+</body>
 </html>
