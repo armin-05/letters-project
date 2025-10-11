@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Ecologies from Cadence</title>
+<title>Instrumented Typist</title>
 <style>
   html, body {
     margin: 0;
@@ -22,26 +22,25 @@
     background: rgba(0,0,0,0.7);
     padding: 10px;
     border-radius: 8px;
-    max-width: 300px;
+    max-width: 350px;
   }
 </style>
 </head>
 <body>
 <canvas id="canvas"></canvas>
 <div id="instructions">
-  <b>Ecologies from Cadence:</b><br>
-  Type to spawn agents:<br>
-  - Fast typing → swarming fireflies<br>
-  - Long key press → slow growing trees/seeds<br>
-  - Backspace → predator eats nearest agent<br>
-  Mouse → spawn location / attract agents<br>
-  Click → local bloom effect
+  <b>Instrumented Typist:</b><br>
+  Q–P: change oscillator frequency<br>
+  A–L: change reverb/delay<br>
+  Space: freeze visuals<br>
+  Enter: bloom snapshot<br>
+  Mouse drag: paint granular textures<br>
+  Type and explore!
 </div>
 
 <script>
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
-
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
@@ -50,48 +49,49 @@ window.addEventListener('resize', ()=>{
   canvas.height = window.innerHeight;
 });
 
-let agents = [];
-let predators = [];
-let blooms = [];
-let lastKeyTime = Date.now();
-let holdStart = null;
+// --- Web Audio Setup ---
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-// Agent types: firefly, seed/tree
-class Agent {
-  constructor(x,y,type){
+let osc = audioCtx.createOscillator();
+let gainNode = audioCtx.createGain();
+let delay = audioCtx.createDelay();
+let feedback = audioCtx.createGain();
+let reverb = audioCtx.createConvolver();
+
+// Delay setup
+delay.delayTime.value = 0.3;
+feedback.gain.value = 0.3;
+delay.connect(feedback);
+feedback.connect(delay);
+
+// Oscillator setup
+osc.type = 'sine';
+osc.frequency.value = 220;
+osc.connect(delay);
+delay.connect(gainNode);
+gainNode.connect(audioCtx.destination);
+osc.start();
+
+// --- Visual particles ---
+let particles = [];
+let freeze = false;
+
+class Particle {
+  constructor(x,y,color){
     this.x = x;
     this.y = y;
-    this.vx = Math.random()*2-1;
-    this.vy = Math.random()*2-1;
-    this.type = type;
-    this.life = 1; // 0-1 normalized
-    this.size = type==='firefly'?4:10;
-    this.color = type==='firefly'?'yellow':'green';
+    this.vx = (Math.random()-0.5)*3;
+    this.vy = (Math.random()-0.5)*3;
+    this.size = Math.random()*8+2;
+    this.color = color;
+    this.life = 1;
   }
   update(){
-    // simple movement
-    if(this.type==='firefly'){
-      this.vx += (Math.random()-0.5)*0.2;
-      this.vy += (Math.random()-0.5)*0.2;
+    if(!freeze){
       this.x += this.vx;
       this.y += this.vy;
-      // wrap around edges
-      if(this.x>canvas.width) this.x=0;
-      if(this.x<0) this.x=canvas.width;
-      if(this.y>canvas.height) this.y=0;
-      if(this.y<0) this.y=canvas.height;
-    } else if(this.type==='seed'){
-      // slow growing tree effect
-      this.vx = 0;
-      this.vy = -0.1;
-      this.x += this.vx;
-      this.y += this.vy;
-      this.size += 0.05; // growth
-      if(this.size>30) this.size=30;
+      this.life -= 0.01;
     }
-
-    // life decay
-    this.life -= 0.001;
   }
   draw(){
     ctx.fillStyle = this.color;
@@ -101,126 +101,66 @@ class Agent {
   }
 }
 
-// Predator (backspace)
-class Predator {
-  constructor(x,y){
-    this.x = x;
-    this.y = y;
-    this.size = 20;
-    this.color = 'red';
-  }
-  update(){
-    // move towards nearest agent
-    if(agents.length>0){
-      let nearest = agents.reduce((a,b)=>distance(this,b)<distance(this,a)?b:a);
-      let dx = nearest.x - this.x;
-      let dy = nearest.y - this.y;
-      let dist = Math.sqrt(dx*dx+dy*dy);
-      if(dist>0){
-        this.x += dx/dist*2;
-        this.y += dy/dist*2;
-      }
-      // eat if close
-      if(dist<10){
-        agents.splice(agents.indexOf(nearest),1);
-      }
-    }
-  }
-  draw(){
-    ctx.fillStyle = this.color;
-    ctx.beginPath();
-    ctx.arc(this.x,this.y,this.size,0,Math.PI*2);
-    ctx.fill();
-  }
-}
+// --- Mouse paint ---
+let mouseDown = false;
+canvas.addEventListener('mousedown',()=>mouseDown=true);
+canvas.addEventListener('mouseup',()=>mouseDown=false);
 
-// Bloom effect (on click)
-class Bloom {
-  constructor(x,y){
-    this.x = x;
-    this.y = y;
-    this.radius = 0;
-    this.maxRadius = 50;
-  }
-  update(){
-    this.radius += 2;
-    if(this.radius>this.maxRadius) this.radius=0;
-  }
-  draw(){
-    ctx.strokeStyle = `rgba(255,255,255,0.3)`;
-    ctx.beginPath();
-    ctx.arc(this.x,this.y,this.radius,0,Math.PI*2);
-    ctx.stroke();
-  }
-}
-
-function distance(a,b){
-  return Math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2);
-}
-
-// Event listeners
-document.addEventListener('keydown', e=>{
-  const now = Date.now();
-  const dt = now - lastKeyTime;
-  lastKeyTime = now;
-  holdStart = now;
-
-  if(e.key==='Backspace'){
-    predators.push(new Predator(canvas.width/2, canvas.height/2));
-    e.preventDefault();
-    return;
-  }
-
-  // Short dt = fast typing → firefly
-  if(dt<200){
-    for(let i=0;i<3;i++){
-      agents.push(new Agent(mouseX,mouseY,'firefly'));
-    }
-  } else { 
-    // longer dt → seed/tree
-    agents.push(new Agent(mouseX,mouseY,'seed'));
-  }
-});
-
-document.addEventListener('keyup', e=>{
-  holdStart = null;
-});
-
-let mouseX = canvas.width/2;
-let mouseY = canvas.height/2;
-
+let mouseX = 0, mouseY=0;
 canvas.addEventListener('mousemove', e=>{
   mouseX = e.clientX;
   mouseY = e.clientY;
+  if(mouseDown){
+    for(let i=0;i<3;i++){
+      particles.push(new Particle(mouseX+Math.random()*20-10, mouseY+Math.random()*20-10,'#'+Math.floor(Math.random()*16777215).toString(16)));
+    }
+  }
 });
 
-canvas.addEventListener('click', e=>{
-  blooms.push(new Bloom(e.clientX,e.clientY));
-});
+// --- Key controls ---
+document.addEventListener('keydown', e=>{
+  if(audioCtx.state==='suspended') audioCtx.resume();
 
-// Animation loop
-function animate(){
-  ctx.fillStyle='rgba(0,0,0,0.2)';
-  ctx.fillRect(0,0,canvas.width,canvas.height);
+  const key = e.key.toUpperCase();
 
-  // Update and draw agents
-  for(let i=agents.length-1;i>=0;i--){
-    agents[i].update();
-    if(agents[i].life<=0) agents.splice(i,1);
-    else agents[i].draw();
+  // Oscillator frequency mapping: Q-P
+  if('QWERTYUIOP'.includes(key)){
+    let idx = 'QWERTYUIOP'.indexOf(key);
+    let freq = 150 + idx*50;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    particles.push(new Particle(mouseX,mouseY,'#FFD700'));
   }
 
-  // Update and draw predators
-  predators.forEach(p=>{
-    p.update();
-    p.draw();
-  });
+  // Reverb / delay mapping: A-L
+  if('ASDFGHJKL'.includes(key)){
+    let idx = 'ASDFGHJKL'.indexOf(key);
+    delay.delayTime.setValueAtTime(0.1 + idx*0.05, audioCtx.currentTime);
+    feedback.gain.setValueAtTime(0.2 + idx*0.03, audioCtx.currentTime);
+    particles.push(new Particle(mouseX,mouseY,'#00FFFF'));
+  }
 
-  // Update and draw blooms
-  for(let i=blooms.length-1;i>=0;i--){
-    blooms[i].update();
-    blooms[i].draw();
-    if(blooms[i].radius===0) blooms.splice(i,1);
+  // Space → freeze toggle
+  if(key===' '){
+    freeze = !freeze;
+  }
+
+  // Enter → bloom snapshot
+  if(key==='ENTER'){
+    for(let i=0;i<50;i++){
+      particles.push(new Particle(Math.random()*canvas.width, Math.random()*canvas.height,'#FF69B4'));
+    }
+  }
+});
+
+// --- Animation loop ---
+function animate(){
+  ctx.fillStyle='rgba(0,0,0,0.1)';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  for(let i=particles.length-1;i>=0;i--){
+    particles[i].update();
+    particles[i].draw();
+    if(particles[i].life<=0) particles.splice(i,1);
   }
 
   requestAnimationFrame(animate);
