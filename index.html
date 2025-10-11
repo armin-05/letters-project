@@ -2,43 +2,42 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Weather Composer</title>
+<title>Ecologies from Cadence</title>
 <style>
   html, body {
     margin: 0;
     padding: 0;
     overflow: hidden;
     height: 100%;
-    background: #87ceeb; /* sky blue */
-    font-family: sans-serif;
+    background: #111;
     user-select: none;
+    font-family: sans-serif;
+    color: #fff;
   }
-  canvas {
-    display: block;
-  }
+  canvas { display:block; }
   #instructions {
     position: absolute;
     top: 10px;
     left: 10px;
-    background: rgba(255,255,255,0.7);
+    background: rgba(0,0,0,0.7);
     padding: 10px;
     border-radius: 8px;
+    max-width: 300px;
   }
 </style>
 </head>
 <body>
 <canvas id="canvas"></canvas>
 <div id="instructions">
-  <b>Weather Composer Controls:</b><br>
-  W = Wind / gust<br>
-  C = Clouds (hold for denser clouds)<br>
-  R = Rain toggle<br>
-  S = Snow toggle<br>
-  T = Thunder / lightning<br>
-  M = Mist / fog<br>
-  Mouse = Position weather effects<br>
-  Click = Local storm spawn
+  <b>Ecologies from Cadence:</b><br>
+  Type to spawn agents:<br>
+  - Fast typing → swarming fireflies<br>
+  - Long key press → slow growing trees/seeds<br>
+  - Backspace → predator eats nearest agent<br>
+  Mouse → spawn location / attract agents<br>
+  Click → local bloom effect
 </div>
+
 <script>
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
@@ -46,219 +45,182 @@ const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-window.addEventListener('resize', () => {
+window.addEventListener('resize', ()=>{
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 });
 
-// Weather state
-let wind = 0;
-let cloudDensity = 0;
-let rain = false;
-let snow = false;
-let mist = false;
-let lightning = false;
+let agents = [];
+let predators = [];
+let blooms = [];
+let lastKeyTime = Date.now();
+let holdStart = null;
 
-// Particles
-const clouds = [];
-const raindrops = [];
-const snowflakes = [];
-const mists = [];
-const storms = [];
-
-// Helpers
-function random(min,max){return Math.random()*(max-min)+min;}
-
-// Cloud particle
-class Cloud {
-  constructor(x,y,size){
+// Agent types: firefly, seed/tree
+class Agent {
+  constructor(x,y,type){
     this.x = x;
     this.y = y;
-    this.size = size;
-    this.speed = random(0.2,0.7);
+    this.vx = Math.random()*2-1;
+    this.vy = Math.random()*2-1;
+    this.type = type;
+    this.life = 1; // 0-1 normalized
+    this.size = type==='firefly'?4:10;
+    this.color = type==='firefly'?'yellow':'green';
   }
   update(){
-    this.x += this.speed + wind;
-    if(this.x > canvas.width+100) this.x = -100;
+    // simple movement
+    if(this.type==='firefly'){
+      this.vx += (Math.random()-0.5)*0.2;
+      this.vy += (Math.random()-0.5)*0.2;
+      this.x += this.vx;
+      this.y += this.vy;
+      // wrap around edges
+      if(this.x>canvas.width) this.x=0;
+      if(this.x<0) this.x=canvas.width;
+      if(this.y>canvas.height) this.y=0;
+      if(this.y<0) this.y=canvas.height;
+    } else if(this.type==='seed'){
+      // slow growing tree effect
+      this.vx = 0;
+      this.vy = -0.1;
+      this.x += this.vx;
+      this.y += this.vy;
+      this.size += 0.05; // growth
+      if(this.size>30) this.size=30;
+    }
+
+    // life decay
+    this.life -= 0.001;
   }
   draw(){
-    ctx.fillStyle = `rgba(255,255,255,0.5)`;
+    ctx.fillStyle = this.color;
     ctx.beginPath();
-    ctx.ellipse(this.x,this.y,this.size*2,this.size,0,0,2*Math.PI);
+    ctx.arc(this.x,this.y,this.size*this.life,0,Math.PI*2);
     ctx.fill();
   }
 }
 
-// Rain particle
-class Rain {
+// Predator (backspace)
+class Predator {
   constructor(x,y){
     this.x = x;
     this.y = y;
-    this.speed = random(4,8);
+    this.size = 20;
+    this.color = 'red';
   }
   update(){
-    this.y += this.speed;
-    this.x += wind*0.5;
-    if(this.y>canvas.height) this.y = random(-100,0);
+    // move towards nearest agent
+    if(agents.length>0){
+      let nearest = agents.reduce((a,b)=>distance(this,b)<distance(this,a)?b:a);
+      let dx = nearest.x - this.x;
+      let dy = nearest.y - this.y;
+      let dist = Math.sqrt(dx*dx+dy*dy);
+      if(dist>0){
+        this.x += dx/dist*2;
+        this.y += dy/dist*2;
+      }
+      // eat if close
+      if(dist<10){
+        agents.splice(agents.indexOf(nearest),1);
+      }
+    }
   }
   draw(){
-    ctx.strokeStyle='rgba(173,216,230,0.7)';
+    ctx.fillStyle = this.color;
     ctx.beginPath();
-    ctx.moveTo(this.x,this.y);
-    ctx.lineTo(this.x,this.y+10);
-    ctx.stroke();
-  }
-}
-
-// Snow particle
-class Snow {
-  constructor(x,y){
-    this.x = x;
-    this.y = y;
-    this.speed = random(1,3);
-    this.angle = random(0,Math.PI*2);
-  }
-  update(){
-    this.y += this.speed;
-    this.x += Math.sin(this.angle)+wind*0.2;
-    this.angle += 0.01;
-    if(this.y>canvas.height) this.y=random(-50,0);
-  }
-  draw(){
-    ctx.fillStyle='rgba(255,255,255,0.9)';
-    ctx.beginPath();
-    ctx.arc(this.x,this.y,2,0,Math.PI*2);
+    ctx.arc(this.x,this.y,this.size,0,Math.PI*2);
     ctx.fill();
   }
 }
 
-// Mist particle
-class Mist {
-  constructor(x,y){
-    this.x = x;
-    this.y = y;
-    this.alpha = random(0.1,0.3);
-    this.radius = random(20,50);
-  }
-  update(){
-    this.x += wind*0.1;
-    this.y -= 0.1;
-  }
-  draw(){
-    ctx.fillStyle=`rgba(200,200,200,${this.alpha})`;
-    ctx.beginPath();
-    ctx.arc(this.x,this.y,this.radius,0,Math.PI*2);
-    ctx.fill();
-  }
-}
-
-// Lightning
-function flashLightning(){
-  lightning = true;
-  setTimeout(()=>lightning=false,100);
-}
-
-// Storm spawn (on click)
-class Storm {
+// Bloom effect (on click)
+class Bloom {
   constructor(x,y){
     this.x = x;
     this.y = y;
     this.radius = 0;
+    this.maxRadius = 50;
   }
   update(){
     this.radius += 2;
-    if(this.radius>150){
-      this.radius = 0;
-    }
+    if(this.radius>this.maxRadius) this.radius=0;
   }
   draw(){
-    ctx.fillStyle=`rgba(255,255,0,0.2)`;
+    ctx.strokeStyle = `rgba(255,255,255,0.3)`;
     ctx.beginPath();
-    ctx.arc(this.x,this.y,this.radius,0,2*Math.PI);
-    ctx.fill();
+    ctx.arc(this.x,this.y,this.radius,0,Math.PI*2);
+    ctx.stroke();
   }
 }
 
-// Generate clouds initially
-for(let i=0;i<30;i++){
-  clouds.push(new Cloud(random(0,canvas.width),random(0,canvas.height/2),random(20,50)));
+function distance(a,b){
+  return Math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2);
 }
 
 // Event listeners
 document.addEventListener('keydown', e=>{
-  const key = e.key.toUpperCase();
-  switch(key){
-    case 'W': wind += 0.1; break;
-    case 'C': cloudDensity = Math.min(cloudDensity + 0.05, 1); break;
-    case 'R': rain = !rain; break;
-    case 'S': snow = !snow; break;
-    case 'T': flashLightning(); break;
-    case 'M': mist = !mist; break;
+  const now = Date.now();
+  const dt = now - lastKeyTime;
+  lastKeyTime = now;
+  holdStart = now;
+
+  if(e.key==='Backspace'){
+    predators.push(new Predator(canvas.width/2, canvas.height/2));
+    e.preventDefault();
+    return;
+  }
+
+  // Short dt = fast typing → firefly
+  if(dt<200){
+    for(let i=0;i<3;i++){
+      agents.push(new Agent(mouseX,mouseY,'firefly'));
+    }
+  } else { 
+    // longer dt → seed/tree
+    agents.push(new Agent(mouseX,mouseY,'seed'));
   }
 });
 
+document.addEventListener('keyup', e=>{
+  holdStart = null;
+});
+
+let mouseX = canvas.width/2;
+let mouseY = canvas.height/2;
+
+canvas.addEventListener('mousemove', e=>{
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+});
+
 canvas.addEventListener('click', e=>{
-  storms.push(new Storm(e.clientX,e.clientY));
+  blooms.push(new Bloom(e.clientX,e.clientY));
 });
 
 // Animation loop
 function animate(){
-  // Background color based on weather
-  let skyR = 135-cloudDensity*60-lightning*80;
-  let skyG = 206-cloudDensity*60-lightning*80;
-  let skyB = 235-cloudDensity*40-lightning*80;
-  ctx.fillStyle = `rgb(${skyR},${skyG},${skyB})`;
+  ctx.fillStyle='rgba(0,0,0,0.2)';
   ctx.fillRect(0,0,canvas.width,canvas.height);
 
-  // Draw clouds
-  for(let i=0;i<clouds.length;i++){
-    clouds[i].update();
-    clouds[i].draw();
+  // Update and draw agents
+  for(let i=agents.length-1;i>=0;i--){
+    agents[i].update();
+    if(agents[i].life<=0) agents.splice(i,1);
+    else agents[i].draw();
   }
 
-  // Draw rain
-  if(rain){
-    while(raindrops.length<300){
-      raindrops.push(new Rain(random(0,canvas.width),random(-canvas.height,0)));
-    }
-    raindrops.forEach(r=>{
-      r.update();
-      r.draw();
-    });
-  }
-
-  // Draw snow
-  if(snow){
-    while(snowflakes.length<150){
-      snowflakes.push(new Snow(random(0,canvas.width),random(-canvas.height,0)));
-    }
-    snowflakes.forEach(s=>{
-      s.update();
-      s.draw();
-    });
-  }
-
-  // Draw mist
-  if(mist){
-    while(mists.length<50){
-      mists.push(new Mist(random(0,canvas.width),canvas.height));
-    }
-    mists.forEach(m=>{
-      m.update();
-      m.draw();
-    });
-  }
-
-  // Draw storms
-  storms.forEach(s=>{
-    s.update();
-    s.draw();
+  // Update and draw predators
+  predators.forEach(p=>{
+    p.update();
+    p.draw();
   });
 
-  // Lightning flash
-  if(lightning){
-    ctx.fillStyle='rgba(255,255,255,0.3)';
-    ctx.fillRect(0,0,canvas.width,canvas.height);
+  // Update and draw blooms
+  for(let i=blooms.length-1;i>=0;i--){
+    blooms[i].update();
+    blooms[i].draw();
+    if(blooms[i].radius===0) blooms.splice(i,1);
   }
 
   requestAnimationFrame(animate);
