@@ -26,17 +26,19 @@ canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
 const opacity = 0.55;
-ctx.lineWidth = 8; // bold lines
+ctx.lineWidth = 8;
 ctx.strokeStyle = `rgba(255, 0, 0, ${opacity})`;
 ctx.fillStyle = `rgba(255, 0, 0, ${opacity})`;
 
-let x = 100; 
-let y = 100;
-let baseX = 100;
-let baseY = 100;
-let verticalStep = 90;
-let horizontalStep = 120;
-let positions = [[{x, y, chars: []}]]; // columns -> rows
+let baseX = 150;
+let baseY = 150;
+let verticalStep = 100;
+let horizontalStep = 130;
+
+// Array of columns, each column = array of "spaces" with position + chars
+let positions = [[{ x: baseX, y: baseY, chars: [] }]];
+let colIndex = 0;
+let rowIndex = 0;
 
 function drawShape(letter, x, y) {
   letter = letter.toLowerCase();
@@ -44,111 +46,149 @@ function drawShape(letter, x, y) {
   ctx.translate(x, y);
   ctx.beginPath();
 
-  switch(letter) {
+  switch (letter) {
     case 'q':
-      ctx.arc(0,0,35,0,Math.PI*2);
-      ctx.moveTo(-35,0); ctx.lineTo(35,0);
+      ctx.arc(0, 0, 35, 0, Math.PI * 2);
+      ctx.moveTo(-35, 0); ctx.lineTo(35, 0);
       break;
     case 'w':
-      for(let i=-35;i<=35;i+=35) { ctx.moveTo(i,-45); ctx.lineTo(i,45); }
+      for (let i = -25; i <= 25; i += 25) {
+        ctx.moveTo(i, -35); ctx.lineTo(i, 35);
+      }
       break;
     case 'e':
-      for(let i=-35;i<=35;i+=35) { ctx.moveTo(-45,i); ctx.lineTo(45,i); }
+      for (let i = -25; i <= 25; i += 25) {
+        ctx.moveTo(-35, i); ctx.lineTo(35, i);
+      }
       break;
     case 'r':
-      ctx.moveTo(35,45); ctx.lineTo(35,-45); ctx.lineTo(-10,-45);
-      ctx.arc(-10,-25,20,Math.PI*1.5,Math.PI*0.5,true);
-      ctx.moveTo(-10,0); ctx.lineTo(35,45);
+      ctx.moveTo(25, 35);
+      ctx.quadraticCurveTo(30, -20, -10, -30);
+      ctx.moveTo(-10, 0);
+      ctx.lineTo(25, 35);
       break;
     case 't':
-      ctx.moveTo(-45,-45); ctx.lineTo(45,-45);
-      ctx.moveTo(0,-45); ctx.lineTo(0,45);
+      ctx.moveTo(-35, -35);
+      ctx.lineTo(35, -35);
+      ctx.moveTo(0, -35);
+      ctx.lineTo(0, 35);
       break;
     case 'y':
-      ctx.moveTo(-45,0); ctx.lineTo(45,0);
-      ctx.moveTo(0,-45); ctx.lineTo(0,45);
+      ctx.moveTo(-35, 0);
+      ctx.lineTo(35, 0);
+      ctx.moveTo(0, -35);
+      ctx.lineTo(0, 35);
       break;
     case 'u':
-      ctx.moveTo(-45,0); ctx.lineTo(45,0);
-      ctx.moveTo(-45,-25); ctx.lineTo(45,-25);
+      ctx.moveTo(-35, -20);
+      ctx.lineTo(35, -20);
+      ctx.moveTo(-35, 0);
+      ctx.lineTo(35, 0);
       break;
     case 'i':
-      ctx.moveTo(0,-45); ctx.lineTo(0,45);
+      ctx.moveTo(0, -40);
+      ctx.lineTo(0, 40);
       break;
     case 'o':
-      ctx.arc(0,0,35,0,Math.PI*2);
+      ctx.arc(0, 0, 35, 0, Math.PI * 2);
       break;
     case 'p':
-      ctx.moveTo(35,45); ctx.lineTo(35,-45);
-      ctx.lineTo(-10,-45); ctx.arc(-10,-25,20,Math.PI*1.5,Math.PI*0.5,true);
+      ctx.moveTo(25, 35);
+      ctx.quadraticCurveTo(20, -15, -10, -25);
+      ctx.arc(-10, -15, 15, -Math.PI / 2, Math.PI / 2, true);
       break;
     case 'a':
-      ctx.moveTo(0,-45); ctx.lineTo(-45,45); ctx.lineTo(45,45); ctx.closePath();
+      ctx.moveTo(0, -40);
+      ctx.lineTo(-35, 35);
+      ctx.lineTo(35, 35);
+      ctx.closePath();
       break;
     case 's':
-      ctx.moveTo(0,0); ctx.arc(-15,-25,15,0,Math.PI*2);
-      ctx.moveTo(0,0); ctx.arc(15,25,15,0,Math.PI*2);
+      ctx.moveTo(-15, -15);
+      ctx.arc(-15, -15, 20, 0, Math.PI * 2);
+      ctx.moveTo(15, 15);
+      ctx.arc(15, 15, 20, 0, Math.PI * 2);
       break;
     case 'd':
-      ctx.moveTo(-45,0); ctx.bezierCurveTo(-10,-35,10,-35,45,0);
-      ctx.moveTo(-45,0); ctx.bezierCurveTo(-10,35,10,35,45,0);
+      ctx.moveTo(-40, 0);
+      ctx.bezierCurveTo(-15, -30, 15, -30, 40, 0);
+      ctx.moveTo(-40, 0);
+      ctx.bezierCurveTo(-15, 30, 15, 30, 40, 0);
       break;
     case 'f':
-      for(let i=-15;i<=15;i+=30){ctx.moveTo(-45,i); ctx.lineTo(45,i);}
+      ctx.moveTo(-40, -10);
+      ctx.lineTo(40, -10);
+      ctx.moveTo(-40, 10);
+      ctx.lineTo(40, 10);
       break;
     case 'g':
-      ctx.arc(0,0,6,0,Math.PI*2);
+      ctx.arc(0, 0, 7, 0, Math.PI * 2);
       break;
     case 'h':
-      ctx.moveTo(-45,-45); ctx.lineTo(-45,45);
-      ctx.moveTo(45,-45); ctx.lineTo(45,45);
-      ctx.moveTo(-45,0); ctx.lineTo(45,0);
+      ctx.moveTo(-35, -35); ctx.lineTo(-35, 35);
+      ctx.moveTo(35, -35); ctx.lineTo(35, 35);
+      ctx.moveTo(-35, 0); ctx.lineTo(35, 0);
       break;
     case 'j':
-      ctx.moveTo(0,-45); ctx.lineTo(0,35);
-      ctx.arc(0,35,10,0,Math.PI,true);
+      ctx.moveTo(0, -40);
+      ctx.lineTo(0, 25);
+      ctx.arc(0, 25, 15, 0, Math.PI, true);
       break;
     case 'k':
-      ctx.moveTo(45,-45); ctx.lineTo(45,45);
-      ctx.moveTo(45,0); ctx.lineTo(0,-45);
-      ctx.moveTo(45,0); ctx.lineTo(0,45);
+      ctx.moveTo(35, -35);
+      ctx.lineTo(35, 35);
+      ctx.moveTo(35, 0);
+      ctx.lineTo(0, -35);
+      ctx.moveTo(35, 0);
+      ctx.lineTo(0, 35);
       break;
     case 'l':
-      ctx.moveTo(45,-45); ctx.lineTo(45,45); ctx.lineTo(0,45);
+      ctx.moveTo(35, -35);
+      ctx.lineTo(35, 35);
+      ctx.quadraticCurveTo(15, 40, 0, 35);
       break;
     case 'z':
       ctx.font = "bold 70px sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText("@",0,0);
+      ctx.fillText("@", 0, 0);
       ctx.restore();
       return;
     case 'x':
-      for(let i=-45;i<=45;i+=90){
-        ctx.moveTo(i,-45); ctx.lineTo(i/2, -i/2);
-        ctx.moveTo(i,45); ctx.lineTo(i/2, i/2);
-      }
+      ctx.moveTo(-40, -40); ctx.lineTo(-10, -10);
+      ctx.moveTo(40, -40); ctx.lineTo(10, -10);
+      ctx.moveTo(-40, 40); ctx.lineTo(-10, 10);
+      ctx.moveTo(40, 40); ctx.lineTo(10, 10);
       break;
     case 'c':
-      ctx.moveTo(35,-35); ctx.arc(0,0,35,-Math.PI/2,Math.PI/2,true);
+      ctx.moveTo(25, -25);
+      ctx.arc(0, 0, 35, -Math.PI / 4, Math.PI / 4, true);
       break;
     case 'v':
-      ctx.moveTo(-35,-45); ctx.lineTo(0,45); ctx.lineTo(35,-45);
+      ctx.moveTo(-30, -40);
+      ctx.lineTo(0, 40);
+      ctx.lineTo(30, -40);
       break;
     case 'b':
-      ctx.moveTo(35,45); ctx.lineTo(35,-45);
-      ctx.lineTo(-10,-45); ctx.arc(-10,-25,20,Math.PI*1.5,Math.PI*0.5,true);
-      ctx.moveTo(35,0); ctx.lineTo(-10,0); ctx.arc(-10,20,20,Math.PI*1.5,Math.PI*0.5,true);
+      ctx.moveTo(35, 35);
+      ctx.lineTo(35, -35);
+      ctx.bezierCurveTo(10, -35, -10, -15, -10, 0);
+      ctx.bezierCurveTo(-10, 15, 10, 35, 35, 35);
       break;
     case 'n':
-      ctx.moveTo(-25,25); ctx.bezierCurveTo(-25,0,25,0,25,25);
-      ctx.bezierCurveTo(25,45,-25,45,-25,25);
+      ctx.moveTo(-20, 20);
+      ctx.bezierCurveTo(-20, 0, 20, 0, 20, 20);
+      ctx.bezierCurveTo(20, 35, -20, 35, -20, 20);
       ctx.closePath();
       ctx.fill();
       ctx.restore();
       return;
     case 'm':
-      ctx.moveTo(-45,45); ctx.lineTo(-45,-45); ctx.lineTo(0,45); ctx.lineTo(45,-45); ctx.lineTo(45,45);
+      ctx.moveTo(-40, 40);
+      ctx.lineTo(-40, -40);
+      ctx.quadraticCurveTo(-20, 20, 0, 40);
+      ctx.quadraticCurveTo(20, 20, 40, -40);
+      ctx.lineTo(40, 40);
       break;
     default:
       ctx.restore();
@@ -159,59 +199,67 @@ function drawShape(letter, x, y) {
   ctx.restore();
 }
 
-document.addEventListener("keydown", (e) => {
-  if(e.repeat) return;
-
-  if(e.key === "Backspace"){
-    e.preventDefault();
-    let col = positions.length - 1;
-    let row = positions[col].length - 1;
-    if(positions[col][row].chars.length > 0){
-      positions[col][row].chars.pop();
-      redrawAll();
-    } else {
-      positions[col].pop();
-      if(positions[col].length === 0 && col > 0) positions.pop();
-      if(positions.length === 0) positions = [[{x: baseX, y: baseY, chars: []}]];
-      redrawAll();
-    }
-    return;
-  }
-
-  if(e.key === "Enter"){
-    e.preventDefault();
-    x += horizontalStep;
-    y = baseY;
-    positions.push([{x, y, chars: []}]);
-    return;
-  }
-
-  if(e.key === " "){
-    e.preventDefault();
-    y += verticalStep;
-    positions[positions.length-1].push({x, y, chars: []});
-    return;
-  }
-
-  if(/^[a-zA-Z]$/.test(e.key)){
-    const col = positions.length - 1;
-    const row = positions[col].length - 1;
-    const current = positions[col][row];
-    current.chars.push(e.key);
-    drawShape(e.key, current.x, current.y);
-  }
-});
-
-function redrawAll(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  for(let col of positions){
-    for(let row of col){
-      for(let ch of row.chars){
-        drawShape(ch,row.x,row.y);
+function redrawAll() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  for (let col of positions) {
+    for (let row of col) {
+      for (let ch of row.chars) {
+        drawShape(ch, row.x, row.y);
       }
     }
   }
 }
+
+document.addEventListener("keydown", (e) => {
+  if (e.repeat) return;
+
+  if (e.key === "Backspace") {
+    e.preventDefault();
+    const current = positions[colIndex][rowIndex];
+    current.chars = []; // clear current space
+    redrawAll();
+
+    // Move up unless at the very top-left
+    if (!(colIndex === 0 && rowIndex === 0)) {
+      if (rowIndex > 0) {
+        rowIndex--;
+      } else if (colIndex > 0) {
+        colIndex--;
+        rowIndex = positions[colIndex].length - 1;
+      }
+    }
+    return;
+  }
+
+  if (e.key === "Enter") {
+    e.preventDefault();
+    colIndex++;
+    rowIndex = 0;
+    const newX = baseX + colIndex * horizontalStep;
+    const newY = baseY;
+    if (!positions[colIndex]) positions[colIndex] = [];
+    positions[colIndex][rowIndex] = { x: newX, y: newY, chars: [] };
+    redrawAll();
+    return;
+  }
+
+  if (e.key === " ") {
+    e.preventDefault();
+    rowIndex++;
+    const newY = baseY + rowIndex * verticalStep;
+    const newX = baseX + colIndex * horizontalStep;
+    if (!positions[colIndex]) positions[colIndex] = [];
+    positions[colIndex][rowIndex] = { x: newX, y: newY, chars: [] };
+    redrawAll();
+    return;
+  }
+
+  if (/^[a-zA-Z]$/.test(e.key)) {
+    const current = positions[colIndex][rowIndex];
+    current.chars.push(e.key);
+    drawShape(e.key, current.x, current.y);
+  }
+});
 </script>
 </body>
 </html>
