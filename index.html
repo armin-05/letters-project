@@ -2,17 +2,19 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Letter Shape Drawer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shape Writer</title>
 <style>
   body {
-    background: #111;
-    margin: 0;
+    background-color: white;
     overflow: hidden;
+    margin: 0;
   }
+
   canvas {
     display: block;
-    margin: auto;
-    background: #111;
+    background: #fff;
+    margin: 0 auto;
   }
 </style>
 </head>
@@ -20,246 +22,245 @@
 <canvas id="canvas"></canvas>
 
 <script>
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-const opacity = 0.55;
-ctx.lineWidth = 8;
-ctx.strokeStyle = `rgba(255, 0, 0, ${opacity})`;
-ctx.fillStyle = `rgba(255, 0, 0, ${opacity})`;
+let x = 100, y = 100;
+const colSpacing = 150;
+const rowSpacing = 150;
+let currentRow = 0;
+let currentCol = 0;
+let history = [[[]]]; // stores shapes per column and row
+let scale = 1;
 
-let baseX = 150;
-let baseY = 150;
-let verticalStep = 100;
-let horizontalStep = 130;
+function zoomOutIfNeeded() {
+  const margin = 100;
+  const maxX = (currentCol + 1) * colSpacing;
+  const maxY = (currentRow + 1) * rowSpacing;
+  if (maxX * scale > window.innerWidth - margin || maxY * scale > window.innerHeight - margin) {
+    scale *= 0.9;
+    ctx.setTransform(scale, 0, 0, scale, 0, 0);
+  }
+}
 
-// Array of columns, each column = array of "spaces" with position + chars
-let positions = [[{ x: baseX, y: baseY, chars: [] }]];
-let colIndex = 0;
-let rowIndex = 0;
-
-function drawShape(letter, x, y) {
-  letter = letter.toLowerCase();
-  ctx.save();
-  ctx.translate(x, y);
+function drawShape(letter, posX, posY) {
+  const size = 60;
+  ctx.strokeStyle = "rgba(255,0,0,0.55)";
+  ctx.lineWidth = 10;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
   ctx.beginPath();
 
-  switch (letter) {
-    case 'q':
-      ctx.arc(0, 0, 35, 0, Math.PI * 2);
-      ctx.moveTo(-35, 0); ctx.lineTo(35, 0);
+  switch (letter.toUpperCase()) {
+    case 'Q':
+      ctx.arc(posX, posY, size / 2, 0, Math.PI * 2);
+      ctx.moveTo(posX - size / 2, posY);
+      ctx.lineTo(posX + size / 2, posY);
       break;
-    case 'w':
-      for (let i = -25; i <= 25; i += 25) {
-        ctx.moveTo(i, -35); ctx.lineTo(i, 35);
+    case 'W':
+      for (let i = -1; i <= 1; i++) {
+        ctx.moveTo(posX + i * 20, posY - 40);
+        ctx.lineTo(posX + i * 20, posY + 40);
       }
       break;
-    case 'e':
-      for (let i = -25; i <= 25; i += 25) {
-        ctx.moveTo(-35, i); ctx.lineTo(35, i);
+    case 'E':
+      for (let i = -1; i <= 1; i++) {
+        ctx.moveTo(posX - 40, posY + i * 20);
+        ctx.lineTo(posX + 40, posY + i * 20);
       }
       break;
-    case 'r':
-      ctx.moveTo(25, 35);
-      ctx.quadraticCurveTo(30, -20, -10, -30);
-      ctx.moveTo(-10, 0);
-      ctx.lineTo(25, 35);
+    case 'R':
+      ctx.moveTo(posX + 40, posY + 60);
+      ctx.lineTo(posX + 40, posY - 60);
+      ctx.lineTo(posX - 10, posY - 60);
+      ctx.arc(posX - 10, posY - 30, 30, -Math.PI / 2, Math.PI / 2);
+      ctx.moveTo(posX - 10, posY);
+      ctx.lineTo(posX + 40, posY + 60);
       break;
-    case 't':
-      ctx.moveTo(-35, -35);
-      ctx.lineTo(35, -35);
-      ctx.moveTo(0, -35);
-      ctx.lineTo(0, 35);
+    case 'T':
+      ctx.moveTo(posX - 40, posY - 40);
+      ctx.lineTo(posX + 40, posY - 40);
+      ctx.moveTo(posX, posY - 40);
+      ctx.lineTo(posX, posY + 40);
       break;
-    case 'y':
-      ctx.moveTo(-35, 0);
-      ctx.lineTo(35, 0);
-      ctx.moveTo(0, -35);
-      ctx.lineTo(0, 35);
+    case 'Y':
+      ctx.moveTo(posX - 40, posY);
+      ctx.lineTo(posX + 40, posY);
+      ctx.moveTo(posX, posY - 40);
+      ctx.lineTo(posX, posY + 40);
       break;
-    case 'u':
-      ctx.moveTo(-35, -20);
-      ctx.lineTo(35, -20);
-      ctx.moveTo(-35, 0);
-      ctx.lineTo(35, 0);
+    case 'U':
+      ctx.moveTo(posX - 40, posY - 10);
+      ctx.lineTo(posX + 40, posY - 10);
+      ctx.moveTo(posX - 40, posY + 10);
+      ctx.lineTo(posX + 40, posY + 10);
       break;
-    case 'i':
-      ctx.moveTo(0, -40);
-      ctx.lineTo(0, 40);
+    case 'I':
+      ctx.moveTo(posX, posY - 40);
+      ctx.lineTo(posX, posY + 40);
       break;
-    case 'o':
-      ctx.arc(0, 0, 35, 0, Math.PI * 2);
+    case 'O':
+      ctx.arc(posX, posY, size / 2, 0, Math.PI * 2);
       break;
-    case 'p':
-      ctx.moveTo(25, 35);
-      ctx.quadraticCurveTo(20, -15, -10, -25);
-      ctx.arc(-10, -15, 15, -Math.PI / 2, Math.PI / 2, true);
+    case 'P':
+      ctx.moveTo(posX + 40, posY + 60);
+      ctx.lineTo(posX + 40, posY - 60);
+      ctx.lineTo(posX - 10, posY - 60);
+      ctx.arc(posX - 10, posY - 30, 30, -Math.PI / 2, Math.PI / 2);
       break;
-    case 'a':
-      ctx.moveTo(0, -40);
-      ctx.lineTo(-35, 35);
-      ctx.lineTo(35, 35);
+    case 'A':
+      const h = Math.sqrt(3) * (size / 2);
+      ctx.moveTo(posX, posY - h / 2);
+      ctx.lineTo(posX - size / 2, posY + h / 2);
+      ctx.lineTo(posX + size / 2, posY + h / 2);
       ctx.closePath();
       break;
-    case 's':
-      ctx.moveTo(-15, -15);
-      ctx.arc(-15, -15, 20, 0, Math.PI * 2);
-      ctx.moveTo(15, 15);
-      ctx.arc(15, 15, 20, 0, Math.PI * 2);
+    case 'S':
+      ctx.moveTo(posX, posY - 20);
+      ctx.arc(posX - 15, posY - 20, 20, 0, Math.PI * 2);
+      ctx.moveTo(posX, posY + 40);
+      ctx.arc(posX + 15, posY + 20, 20, 0, Math.PI * 2);
       break;
-    case 'd':
-      ctx.moveTo(-40, 0);
-      ctx.bezierCurveTo(-15, -30, 15, -30, 40, 0);
-      ctx.moveTo(-40, 0);
-      ctx.bezierCurveTo(-15, 30, 15, 30, 40, 0);
+    case 'D':
+      ctx.moveTo(posX - 40, posY - 20);
+      ctx.bezierCurveTo(posX + 40, posY - 40, posX + 40, posY + 40, posX - 40, posY + 20);
+      ctx.moveTo(posX + 40, posY - 20);
+      ctx.bezierCurveTo(posX - 40, posY - 40, posX - 40, posY + 40, posX + 40, posY + 20);
       break;
-    case 'f':
-      ctx.moveTo(-40, -10);
-      ctx.lineTo(40, -10);
-      ctx.moveTo(-40, 10);
-      ctx.lineTo(40, 10);
+    case 'F':
+      ctx.moveTo(posX - 40, posY - 10);
+      ctx.lineTo(posX + 40, posY - 10);
+      ctx.moveTo(posX - 40, posY + 10);
+      ctx.lineTo(posX + 40, posY + 10);
       break;
-    case 'g':
-      ctx.arc(0, 0, 7, 0, Math.PI * 2);
+    case 'G':
+      ctx.arc(posX, posY, 5, 0, Math.PI * 2);
       break;
-    case 'h':
-      ctx.moveTo(-35, -35); ctx.lineTo(-35, 35);
-      ctx.moveTo(35, -35); ctx.lineTo(35, 35);
-      ctx.moveTo(-35, 0); ctx.lineTo(35, 0);
+    case 'H':
+      ctx.moveTo(posX - 40, posY);
+      ctx.lineTo(posX + 40, posY);
+      ctx.moveTo(posX - 40, posY);
+      ctx.lineTo(posX - 20, posY - 20);
+      ctx.moveTo(posX + 40, posY);
+      ctx.lineTo(posX + 20, posY - 20);
       break;
-    case 'j':
-      ctx.moveTo(0, -40);
-      ctx.lineTo(0, 25);
-      ctx.arc(0, 25, 15, 0, Math.PI, true);
+    case 'J':
+      ctx.moveTo(posX - 30, posY - 40);
+      ctx.lineTo(posX + 30, posY - 40);
+      ctx.lineTo(posX + 30, posY + 20);
+      ctx.arc(posX, posY + 20, 30, 0, Math.PI, false);
       break;
-    case 'k':
-      ctx.moveTo(35, -35);
-      ctx.lineTo(35, 35);
-      ctx.moveTo(35, 0);
-      ctx.lineTo(0, -35);
-      ctx.moveTo(35, 0);
-      ctx.lineTo(0, 35);
+    case 'K':
+      ctx.moveTo(posX + 40, posY - 60);
+      ctx.lineTo(posX + 40, posY + 60);
+      ctx.moveTo(posX + 40, posY);
+      ctx.lineTo(posX - 20, posY - 40);
+      ctx.moveTo(posX + 40, posY);
+      ctx.lineTo(posX - 20, posY + 40);
       break;
-    case 'l':
-      ctx.moveTo(35, -35);
-      ctx.lineTo(35, 35);
-      ctx.quadraticCurveTo(15, 40, 0, 35);
+    case 'L':
+      ctx.moveTo(posX + 40, posY - 60);
+      ctx.lineTo(posX + 40, posY + 60);
+      ctx.lineTo(posX - 20, posY + 60);
       break;
-    case 'z':
-      ctx.font = "bold 70px sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText("@", 0, 0);
-      ctx.restore();
+    case 'Z':
+      ctx.font = "bold 80px Arial";
+      ctx.fillStyle = "rgba(255,0,0,0.55)";
+      ctx.fillText("@", posX - 30, posY + 30);
       return;
-    case 'x':
-      ctx.moveTo(-40, -40); ctx.lineTo(-10, -10);
-      ctx.moveTo(40, -40); ctx.lineTo(10, -10);
-      ctx.moveTo(-40, 40); ctx.lineTo(-10, 10);
-      ctx.moveTo(40, 40); ctx.lineTo(10, 10);
+    case 'X':
+      ctx.moveTo(posX - 40, posY - 40);
+      ctx.lineTo(posX - 10, posY - 10);
+      ctx.moveTo(posX + 40, posY - 40);
+      ctx.lineTo(posX + 10, posY - 10);
+      ctx.moveTo(posX - 40, posY + 40);
+      ctx.lineTo(posX - 10, posY + 10);
+      ctx.moveTo(posX + 40, posY + 40);
+      ctx.lineTo(posX + 10, posY + 10);
       break;
-    case 'c':
-      ctx.moveTo(25, -25);
-      ctx.arc(0, 0, 35, -Math.PI / 4, Math.PI / 4, true);
+    case 'C':
+      ctx.arc(posX, posY, 40, Math.PI / 2, -Math.PI / 2, true);
       break;
-    case 'v':
-      ctx.moveTo(-30, -40);
-      ctx.lineTo(0, 40);
-      ctx.lineTo(30, -40);
+    case 'V':
+      ctx.moveTo(posX - 40, posY - 40);
+      ctx.lineTo(posX, posY + 40);
+      ctx.lineTo(posX + 40, posY - 40);
       break;
-    case 'b':
-      ctx.moveTo(35, 35);
-      ctx.lineTo(35, -35);
-      ctx.bezierCurveTo(10, -35, -10, -15, -10, 0);
-      ctx.bezierCurveTo(-10, 15, 10, 35, 35, 35);
+    case 'B':
+      ctx.moveTo(posX + 40, posY + 60);
+      ctx.lineTo(posX + 40, posY - 60);
+      ctx.lineTo(posX - 10, posY - 60);
+      ctx.arc(posX - 10, posY - 30, 30, -Math.PI / 2, Math.PI / 2);
+      ctx.moveTo(posX + 40, posY);
+      ctx.lineTo(posX - 10, posY + 60);
+      ctx.arc(posX - 10, posY + 30, 30, -Math.PI / 2, Math.PI / 2);
       break;
-    case 'n':
-      ctx.moveTo(-20, 20);
-      ctx.bezierCurveTo(-20, 0, 20, 0, 20, 20);
-      ctx.bezierCurveTo(20, 35, -20, 35, -20, 20);
-      ctx.closePath();
-      ctx.fill();
-      ctx.restore();
-      return;
-    case 'm':
-      ctx.moveTo(-40, 40);
-      ctx.lineTo(-40, -40);
-      ctx.quadraticCurveTo(-20, 20, 0, 40);
-      ctx.quadraticCurveTo(20, 20, 40, -40);
-      ctx.lineTo(40, 40);
+    case 'N':
+      ctx.moveTo(posX, posY);
+      ctx.bezierCurveTo(posX - 40, posY - 40, posX - 80, posY + 20, posX, posY + 60);
+      ctx.bezierCurveTo(posX + 80, posY + 20, posX + 40, posY - 40, posX, posY);
       break;
-    default:
-      ctx.restore();
-      return;
+    case 'M':
+      ctx.moveTo(posX + 40, posY + 60);
+      ctx.lineTo(posX + 40, posY - 60);
+      ctx.lineTo(posX, posY);
+      ctx.lineTo(posX - 40, posY - 60);
+      ctx.lineTo(posX - 40, posY + 60);
+      break;
   }
 
   ctx.stroke();
-  ctx.restore();
 }
 
-function redrawAll() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  for (let col of positions) {
-    for (let row of col) {
-      for (let ch of row.chars) {
-        drawShape(ch, row.x, row.y);
-      }
+document.addEventListener('keydown', (e) => {
+  const letter = e.key;
+
+  if (/^[a-zA-Z]$/.test(letter)) {
+    drawShape(letter, x, y);
+    history[currentCol][currentRow].push(letter);
+  } else if (letter === ' ') {
+    currentRow++;
+    if (!history[currentCol][currentRow]) history[currentCol][currentRow] = [];
+    y += rowSpacing;
+  } else if (letter === 'Enter') {
+    currentCol++;
+    currentRow = 0;
+    if (!history[currentCol]) history[currentCol] = [[]];
+    x += colSpacing;
+    y = 100;
+  } else if (letter === 'Backspace') {
+    e.preventDefault();
+    const currentShapes = history[currentCol][currentRow];
+    if (currentShapes.length > 0) {
+      history[currentCol][currentRow] = [];
+      redraw();
+    } else if (currentRow > 0) {
+      currentRow--;
+      y -= rowSpacing;
+      redraw();
+    } else if (currentCol > 0) {
+      currentCol--;
+      x -= colSpacing;
+      currentRow = history[currentCol].length - 1;
+      y = 100 + rowSpacing * currentRow;
+      redraw();
     }
   }
-}
 
-document.addEventListener("keydown", (e) => {
-  if (e.repeat) return;
-
-  if (e.key === "Backspace") {
-    e.preventDefault();
-    const current = positions[colIndex][rowIndex];
-    current.chars = []; // clear current space
-    redrawAll();
-
-    // Move up unless at the very top-left
-    if (!(colIndex === 0 && rowIndex === 0)) {
-      if (rowIndex > 0) {
-        rowIndex--;
-      } else if (colIndex > 0) {
-        colIndex--;
-        rowIndex = positions[colIndex].length - 1;
-      }
-    }
-    return;
-  }
-
-  if (e.key === "Enter") {
-    e.preventDefault();
-    colIndex++;
-    rowIndex = 0;
-    const newX = baseX + colIndex * horizontalStep;
-    const newY = baseY;
-    if (!positions[colIndex]) positions[colIndex] = [];
-    positions[colIndex][rowIndex] = { x: newX, y: newY, chars: [] };
-    redrawAll();
-    return;
-  }
-
-  if (e.key === " ") {
-    e.preventDefault();
-    rowIndex++;
-    const newY = baseY + rowIndex * verticalStep;
-    const newX = baseX + colIndex * horizontalStep;
-    if (!positions[colIndex]) positions[colIndex] = [];
-    positions[colIndex][rowIndex] = { x: newX, y: newY, chars: [] };
-    redrawAll();
-    return;
-  }
-
-  if (/^[a-zA-Z]$/.test(e.key)) {
-    const current = positions[colIndex][rowIndex];
-    current.chars.push(e.key);
-    drawShape(e.key, current.x, current.y);
-  }
+  zoomOutIfNeeded();
 });
+
+function redraw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  for (let c = 0; c < history.length; c++) {
+    for (let r = 0; r < history[c].length; r++) {
+      const letters = history[c][r];
+      letters.forEach(l => drawShape(l, 100 + c * colSpacing, 100 + r * rowSpacing));
+    }
+  }
+}
 </script>
 </body>
 </html>
