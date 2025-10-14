@@ -1,83 +1,257 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Shape Typing</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Shape Writer</title>
 <style>
-  html,body{margin:0;padding:0;overflow:hidden;background:black;}
-  canvas{display:block;background:black;}
+  html,body{height:100%;margin:0;background:#000;overflow:hidden}
+  canvas{display:block;background:#000;width:100%;height:100%}
 </style>
 </head>
 <body>
-<canvas id="c"></canvas>
+<canvas id="canvas"></canvas>
 <script>
-const canvas=document.getElementById("c"),ctx=canvas.getContext("2d");
-let W=innerWidth,H=innerHeight;canvas.width=W;canvas.height=H;
-let scale=1,baseSize=60,spacing=baseSize*1.5;
-let posX=0,posY=0,col=0,row=0,grid=[];
-const color="rgba(255,0,0,0.55)";
-function resize(){W=innerWidth;H=innerHeight;canvas.width=W;canvas.height=H;draw();}
-addEventListener("resize",resize);
-function drawShape(ch,x,y,s){
- ctx.lineWidth=s/8;ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineCap="round";ctx.lineJoin="round";
- const r=s/2;const r2=r/2;
- ctx.beginPath();
- switch(ch){
-  case'Q':ctx.arc(x,y,r,0,2*Math.PI);ctx.moveTo(x-r,y);ctx.lineTo(x+r,y);break;
-  case'W':for(let i=-1;i<=1;i++){ctx.moveTo(x+i*r2/1.5,y-r);ctx.lineTo(x+i*r2/1.5,y+r);}break;
-  case'E':for(let i=-1;i<=1;i++){ctx.moveTo(x-r,y+i*r2/1.5);ctx.lineTo(x+r,y+i*r2/1.5);}break;
-  case'R':ctx.arc(x,y,r,0,2*Math.PI);ctx.moveTo(x,y-r);ctx.lineTo(x,y+r);break;
-  case'T':ctx.moveTo(x,y-r);ctx.lineTo(x,y+r);ctx.moveTo(x-r,y-r);ctx.lineTo(x+r,y-r);break;
-  case'Y':ctx.moveTo(x,y);ctx.lineTo(x,y-r);ctx.moveTo(x,y);ctx.lineTo(x-r2,y+r2);ctx.moveTo(x,y);ctx.lineTo(x+r2,y+r2);break;
-  case'U':ctx.moveTo(x-r,y-r2);ctx.lineTo(x+r,y-r2);ctx.moveTo(x-r,y+r2);ctx.lineTo(x+r,y+r2);break;
-  case'I':ctx.moveTo(x,y-r);ctx.lineTo(x,y+r);break;
-  case'O':ctx.arc(x,y,r,0,2*Math.PI);break;
-  case'P':ctx.arc(x,y,r*0.6,0,2*Math.PI);break;
-  case'A':ctx.moveTo(x,y-r);ctx.lineTo(x+r,y+r);ctx.lineTo(x-r,y+r);ctx.closePath();break;
-  case'S':for(let i=0;i<3;i++){let a=i*2*Math.PI/3;ctx.moveTo(x+r2*Math.cos(a),y+r2*Math.sin(a));ctx.arc(x+r2*Math.cos(a),y+r2*Math.sin(a),r/3,0,2*Math.PI);}break;
-  case'D':for(let i=-1;i<=1;i+=2){ctx.moveTo(x,y+i*r2);ctx.arc(x,y+i*r2,r/3,0,2*Math.PI);}break;
-  case'F':for(let i=-1;i<=1;i+=2){ctx.moveTo(x-r,y+i*r2/1.5);ctx.lineTo(x+r,y+i*r2/1.5);}break;
-  case'G':ctx.arc(x,y,r/6,0,2*Math.PI);break;
-  case'H':ctx.moveTo(x-r,y-r);ctx.lineTo(x+r,y+r);ctx.moveTo(x+r,y-r);ctx.lineTo(x-r,y+r);ctx.moveTo(x-r,y);ctx.lineTo(x+r,y);break;
-  case'J':ctx.moveTo(x-r,y-r);ctx.lineTo(x+r,y-r);ctx.moveTo(x,y-r);ctx.lineTo(x,y+r);ctx.moveTo(x-r,y+r);ctx.lineTo(x+r,y+r);break;
-  case'K':for(let a=0;a<Math.PI*2;a+=Math.PI/2){ctx.moveTo(x+r2*Math.cos(a),y+r2*Math.sin(a));ctx.lineTo(x+r2.5*Math.cos(a+Math.PI/4),y+r2.5*Math.sin(a+Math.PI/4));}break;
-  case'L':ctx.moveTo(x,y-r);ctx.lineTo(x,y+r);ctx.moveTo(x,y);ctx.lineTo(x+r,y);break;
-  case'Z':ctx.moveTo(x-r,y-r);ctx.lineTo(x+r,y-r);ctx.moveTo(x,y);ctx.arc(x,y,2,0,2*Math.PI);ctx.moveTo(x-r,y+r);ctx.lineTo(x+r,y+r);break;
-  case'X':for(let a=0;a<Math.PI*2;a+=Math.PI/2){ctx.moveTo(x+r2.2*Math.cos(a),y+r2.2*Math.sin(a));ctx.lineTo(x+r2*Math.cos(a+Math.PI/4),y+r2*Math.sin(a+Math.PI/4));}break;
-  case'C':ctx.arc(x,y,r,Math.PI/4,Math.PI*7/4);break;
-  case'V':ctx.moveTo(x-r,y-r);ctx.lineTo(x,y+r);ctx.lineTo(x+r,y-r);break;
-  case'B':for(let i=-1;i<=1;i+=2){for(let j=-1;j<=1;j+=2){ctx.moveTo(x+i*r2,y+j*r2);ctx.arc(x+i*r2,y+j*r2,r/4,0,2*Math.PI);}}break;
-  case'N':ctx.moveTo(x,y);ctx.arc(x-r/2,y-r/4,r/3,0,Math.PI,true);ctx.arc(x+r/2,y-r/4,r/3,0,Math.PI,true);ctx.lineTo(x,y+r/1.5);break;
-  case'M':for(let i=-1;i<=1;i++){if(i===0){ctx.arc(x+i*r2,y,r/10,0,2*Math.PI);}else{ctx.moveTo(x+i*r2,y-r);ctx.lineTo(x+i*r2,y+r);}}break;
- }
- ctx.stroke();ctx.fill();
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+function fitCanvas(){
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
 }
-function draw(){ctx.setTransform(scale,0,0,scale,0,0);ctx.clearRect(0,0,W,H);ctx.beginPath();ctx.arc(10,10,3,0,2*Math.PI);ctx.fillStyle="rgba(255,0,0,0.2)";ctx.fill();ctx.strokeStyle=color;for(let i=0;i<grid.length;i++){let g=grid[i];drawShape(g.ch,g.x,g.y,g.s);}}
-function checkZoom(){
- let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
- grid.forEach(g=>{minX=Math.min(minX,g.x-g.s/2);maxX=Math.max(maxX,g.x+g.s/2);minY=Math.min(minY,g.y-g.s/2);maxY=Math.max(maxY,g.y+g.s/2);});
- if(grid.length>0){
-  let needOut=minX<0||maxX>W||minY<0||maxY>H;
-  let needIn=!needOut&&(maxX-minX<W*0.9)&&(maxY-minY<H*0.9);
-  if(needOut)scale*=0.9;
-  if(needIn&&scale<1)scale*=1.1;
- }
+fitCanvas();
+addEventListener('resize',()=>{fitCanvas(); recomputeZoomAndDraw();});
+
+const baseX = 100;
+const baseY = 100;
+const size = 72;
+const colSpacing = 150;
+const rowSpacing = 150;
+const margin = 40;
+let scale = 1;
+
+let currentCol = 0;
+let currentRow = 0;
+let history = [[[]]]; // columns -> rows -> array of letters
+
+function addCellIfMissing(col, row){
+  if(!history[col]) history[col]=[];
+  if(!history[col][row]) history[col][row]=[];
 }
-function addChar(ch){if(ch<'A'||ch>'Z')return;let x=posX+spacing*col,y=posY+spacing*row;
- grid.push({ch,x,y,s:baseSize});draw();checkZoom();draw();}
-function delChar(){
- if(grid.length===0)return;
- grid.pop();draw();checkZoom();draw();
+
+function drawShape(letter, cx, cy){
+  const s = size;
+  ctx.strokeStyle = "rgba(255,0,0,0.55)";
+  ctx.fillStyle = "rgba(255,0,0,0.55)";
+  ctx.lineWidth = Math.max(6, s * 0.13);
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.beginPath();
+  const L = letter.toUpperCase();
+  if(L === 'Q'){
+    ctx.arc(cx,cy,s/2,0,Math.PI*2);
+    ctx.moveTo(cx - s/2, cy); ctx.lineTo(cx + s/2, cy);
+  } else if(L === 'W'){
+    for(let i=-1;i<=1;i++) ctx.moveTo(cx + i*20, cy - s/2, ), ctx.lineTo(cx + i*20, cy + s/2);
+  } else if(L === 'E'){
+    for(let i=-1;i<=1;i++) ctx.moveTo(cx - s/2, cy + i*20), ctx.lineTo(cx + s/2, cy + i*20);
+  } else if(L === 'R'){
+    ctx.arc(cx,cy,s/2,0,Math.PI*2);
+    ctx.moveTo(cx, cy - s/2); ctx.lineTo(cx, cy + s/2);
+  } else if(L === 'T'){
+    ctx.moveTo(cx - s/2, cy - s/2); ctx.lineTo(cx + s/2, cy - s/2);
+    ctx.moveTo(cx, cy - s/2); ctx.lineTo(cx, cy + s/2);
+  } else if(L === 'Y'){
+    ctx.moveTo(cx,cy); ctx.lineTo(cx, cy - s/2);
+    ctx.moveTo(cx,cy); ctx.lineTo(cx - s*0.45, cy + s*0.45);
+    ctx.moveTo(cx,cy); ctx.lineTo(cx + s*0.45, cy + s*0.45);
+  } else if(L === 'U'){
+    ctx.moveTo(cx - s/2, cy - 10); ctx.lineTo(cx + s/2, cy - 10);
+    ctx.moveTo(cx - s/2, cy + 10); ctx.lineTo(cx + s/2, cy + 10);
+  } else if(L === 'I'){
+    ctx.moveTo(cx, cy - s/2); ctx.lineTo(cx, cy + s/2);
+  } else if(L === 'O'){
+    ctx.arc(cx,cy,s/2,0,Math.PI*2);
+  } else if(L === 'P'){
+    ctx.arc(cx,cy,s*0.35,0,Math.PI*2);
+  } else if(L === 'A'){
+    const h = Math.sqrt(3) * (s/1.1) / 2;
+    ctx.moveTo(cx, cy - h);
+    ctx.lineTo(cx - s/1.1, cy + h);
+    ctx.lineTo(cx + s/1.1, cy + h);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.fill();
+    return;
+  } else if(L === 'S'){
+    const r = s*0.22;
+    const offset = s*0.35;
+    ctx.arc(cx, cy - offset, r, 0, Math.PI*2);
+    ctx.moveTo(cx + r, cy - offset);
+    ctx.arc(cx, cy + offset/2, r, 0, Math.PI*2);
+    ctx.moveTo(cx + r, cy + offset/2);
+    ctx.arc(cx - offset*0.5, cy + offset*1.1, r, 0, Math.PI*2);
+  } else if(L === 'D'){
+    const r = s*0.28;
+    ctx.arc(cx, cy - r, r, 0, Math.PI*2);
+    ctx.moveTo(cx + r, cy - r);
+    ctx.arc(cx, cy + r, r, 0, Math.PI*2);
+  } else if(L === 'F'){
+    ctx.moveTo(cx - s/2, cy - s*0.12); ctx.lineTo(cx + s/2, cy - s*0.12);
+    ctx.moveTo(cx - s/2, cy + s*0.12); ctx.lineTo(cx + s/2, cy + s*0.12);
+  } else if(L === 'G'){
+    ctx.arc(cx, cy, Math.max(3, s*0.06), 0, Math.PI*2);
+  } else if(L === 'H'){
+    const a = s*0.42;
+    ctx.moveTo(cx - a, cy - a); ctx.lineTo(cx + a, cy + a);
+    ctx.moveTo(cx + a, cy - a); ctx.lineTo(cx - a, cy + a);
+    ctx.moveTo(cx - a, cy); ctx.lineTo(cx + a, cy);
+  } else if(L === 'J'){
+    ctx.moveTo(cx - s*0.45, cy - s*0.5); ctx.lineTo(cx + s*0.45, cy - s*0.5);
+    ctx.moveTo(cx, cy - s*0.5); ctx.lineTo(cx, cy + s*0.5);
+    ctx.moveTo(cx - s*0.45, cy + s*0.5); ctx.lineTo(cx + s*0.45, cy + s*0.5);
+  } else if(L === 'K'){
+    const a = s*0.35;
+    ctx.moveTo(cx - a, cy); ctx.lineTo(cx + a, cy);
+    ctx.moveTo(cx, cy - a); ctx.lineTo(cx, cy + a);
+  } else if(L === 'L'){
+    ctx.moveTo(cx, cy - s/2); ctx.lineTo(cx, cy + s/2);
+    ctx.moveTo(cx - s*0.35, cy); ctx.lineTo(cx + s*0.35, cy);
+  } else if(L === 'Z'){
+    ctx.moveTo(cx - s/2, cy - s*0.3); ctx.lineTo(cx + s/2, cy - s*0.3);
+    ctx.moveTo(cx, cy); ctx.arc(cx, cy, Math.max(3, s*0.06), 0, Math.PI*2);
+    ctx.moveTo(cx - s/3, cy + s*0.3); ctx.lineTo(cx + s/3, cy + s*0.3);
+  } else if(L === 'X'){
+    const a = s*0.45;
+    ctx.moveTo(cx - a, cy - a); ctx.lineTo(cx - a*0.25, cy - a*0.25);
+    ctx.moveTo(cx + a, cy - a); ctx.lineTo(cx + a*0.25, cy - a*0.25);
+    ctx.moveTo(cx - a, cy + a); ctx.lineTo(cx - a*0.25, cy + a*0.25);
+    ctx.moveTo(cx + a, cy + a); ctx.lineTo(cx + a*0.25, cy + a*0.25);
+  } else if(L === 'C'){
+    ctx.moveTo(cx + s*0.4, cy - s*0.4);
+    ctx.bezierCurveTo(cx - s*0.5, cy - s*0.5, cx - s*0.5, cy + s*0.5, cx + s*0.4, cy + s*0.4);
+  } else if(L === 'V'){
+    ctx.moveTo(cx - s*0.45, cy - s*0.45); ctx.lineTo(cx, cy + s*0.45); ctx.lineTo(cx + s*0.45, cy - s*0.45);
+  } else if(L === 'B'){
+    const r = s*0.18;
+    const off = s*0.22;
+    ctx.arc(cx - off, cy - off, r, 0, Math.PI*2);
+    ctx.moveTo(cx + off - r, cy - off);
+    ctx.arc(cx + off, cy - off, r, 0, Math.PI*2);
+    ctx.moveTo(cx - off, cy + off - r);
+    ctx.arc(cx - off, cy + off, r, 0, Math.PI*2);
+    ctx.moveTo(cx + off - r, cy + off);
+    ctx.arc(cx + off, cy + off, r, 0, Math.PI*2);
+  } else if(L === 'N'){
+    ctx.moveTo(cx, cy);
+    ctx.bezierCurveTo(cx - s*0.4, cy - s*0.35, cx - s*0.8, cy + s*0.2, cx, cy + s*0.5);
+    ctx.bezierCurveTo(cx + s*0.8, cy + s*0.2, cx + s*0.4, cy - s*0.35, cx, cy);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    return;
+  } else if(L === 'M'){
+    ctx.moveTo(cx - s*0.45, cy - s*0.45); ctx.lineTo(cx - s*0.45, cy + s*0.45);
+    ctx.arc(cx, cy, Math.max(3, s*0.06), 0, Math.PI*2);
+    ctx.moveTo(cx + s*0.45, cy - s*0.45); ctx.lineTo(cx + s*0.45, cy + s*0.45);
+  } else {
+    return;
+  }
+  ctx.stroke();
 }
-addEventListener("keydown",e=>{
- let k=e.key.toUpperCase();
- if(k>='A'&&k<='Z'){addChar(k);}
- else if(e.key===" "){row++;}
- else if(e.key==="Enter"){row=0;col++;}
- else if(e.key==="Backspace"){e.preventDefault();delChar();if(row>0)row--;else if(col>0){col--;row=0;}}
+
+function redraw(){
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.setTransform(scale,0,0,scale,0,0);
+  ctx.beginPath();
+  ctx.fillStyle = "rgba(255,0,0,0.18)";
+  ctx.arc(baseX*0.08, baseY*0.08, 4,0,Math.PI*2);
+  ctx.fill();
+  for(let c=0;c<history.length;c++){
+    for(let r=0;r<history[c].length;r++){
+      const arr = history[c][r]||[];
+      if(arr.length===0) continue;
+      const cx = baseX + c*colSpacing;
+      const cy = baseY + r*rowSpacing;
+      for(let i=0;i<arr.length;i++){
+        drawShape(arr[i], cx, cy);
+      }
+    }
+  }
+}
+
+function computeBoundingBox(){
+  let minX=Infinity, minY=Infinity, maxX=-Infinity, maxY=-Infinity;
+  for(let c=0;c<history.length;c++){
+    for(let r=0;r<history[c].length;r++){
+      const arr = history[c][r]||[];
+      if(arr.length===0) continue;
+      const cx = baseX + c*colSpacing;
+      const cy = baseY + r*rowSpacing;
+      const ext = size/2 + 10;
+      minX = Math.min(minX, cx - ext);
+      minY = Math.min(minY, cy - ext);
+      maxX = Math.max(maxX, cx + ext);
+      maxY = Math.max(maxY, cy + ext);
+    }
+  }
+  if(minX===Infinity) return null;
+  return {minX,minY,maxX,maxY,width: maxX-minX,height: maxY-minY};
+}
+
+function recomputeZoomAndDraw(){
+  const bbox = computeBoundingBox();
+  if(!bbox){
+    scale = 1;
+    redraw();
+    return;
+  }
+  const availW = window.innerWidth - margin*2;
+  const availH = window.innerHeight - margin*2;
+  let required = 1;
+  if(bbox.width > availW || bbox.height > availH){
+    required = Math.min(availW / bbox.width, availH / bbox.height);
+    if(required > 1) required = 1;
+  } else {
+    required = 1;
+  }
+  scale = required;
+  redraw();
+}
+
+addEventListener('keydown', (e)=>{
+  if(e.key === ' '){ e.preventDefault(); currentRow++; addCellIfMissing(currentCol,currentRow); recomputeZoomAndDraw(); return; }
+  if(e.key === 'Enter'){ e.preventDefault(); currentCol++; currentRow = 0; addCellIfMissing(currentCol,currentRow); recomputeZoomAndDraw(); return; }
+  if(e.key === 'Backspace'){ e.preventDefault();
+    addCellIfMissing(currentCol,currentRow);
+    if(history[currentCol][currentRow] && history[currentCol][currentRow].length>0){
+      history[currentCol][currentRow] = [];
+      recomputeZoomAndDraw();
+      return;
+    }
+    if(currentRow > 0){
+      currentRow--;
+      recomputeZoomAndDraw();
+      return;
+    }
+    if(currentCol > 0){
+      currentCol--;
+      currentRow = (history[currentCol].length-1)>=0 ? history[currentCol].length-1 : 0;
+      if(!history[currentCol][currentRow]) history[currentCol][currentRow]=[];
+      recomputeZoomAndDraw();
+      return;
+    }
+    return;
+  }
+  if(/^[a-zA-Z]$/.test(e.key)){
+    addCellIfMissing(currentCol,currentRow);
+    history[currentCol][currentRow].push(e.key);
+    recomputeZoomAndDraw();
+    return;
+  }
 });
-draw();
+
+redraw();
 </script>
 </body>
 </html>
