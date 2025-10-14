@@ -1,257 +1,208 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Shape Writer</title>
-<style>
-  html,body{height:100%;margin:0;background:#000;overflow:hidden}
-  canvas{display:block;background:#000;width:100%;height:100%}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shape Writer p5.js</title>
+  <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.min.js"></script>
 </head>
-<body>
-<canvas id="canvas"></canvas>
+<body style="margin:0;overflow:hidden;background:black">
 <script>
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
-function fitCanvas(){
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-}
-fitCanvas();
-addEventListener('resize',()=>{fitCanvas(); recomputeZoomAndDraw();});
+let colSpacing = 150, rowSpacing = 150;
+let history = [[[]]];
+let currentCol = 0, currentRow = 0;
+let scaleFactor = 1;
+let posX = 100, posY = 100;
 
-const baseX = 100;
-const baseY = 100;
-const size = 72;
-const colSpacing = 150;
-const rowSpacing = 150;
-const margin = 40;
-let scale = 1;
-
-let currentCol = 0;
-let currentRow = 0;
-let history = [[[]]]; // columns -> rows -> array of letters
-
-function addCellIfMissing(col, row){
-  if(!history[col]) history[col]=[];
-  if(!history[col][row]) history[col][row]=[];
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  strokeWeight(10);
+  stroke(255,0,0,140);
+  noFill();
 }
 
-function drawShape(letter, cx, cy){
-  const s = size;
-  ctx.strokeStyle = "rgba(255,0,0,0.55)";
-  ctx.fillStyle = "rgba(255,0,0,0.55)";
-  ctx.lineWidth = Math.max(6, s * 0.13);
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
-  ctx.beginPath();
-  const L = letter.toUpperCase();
-  if(L === 'Q'){
-    ctx.arc(cx,cy,s/2,0,Math.PI*2);
-    ctx.moveTo(cx - s/2, cy); ctx.lineTo(cx + s/2, cy);
-  } else if(L === 'W'){
-    for(let i=-1;i<=1;i++) ctx.moveTo(cx + i*20, cy - s/2, ), ctx.lineTo(cx + i*20, cy + s/2);
-  } else if(L === 'E'){
-    for(let i=-1;i<=1;i++) ctx.moveTo(cx - s/2, cy + i*20), ctx.lineTo(cx + s/2, cy + i*20);
-  } else if(L === 'R'){
-    ctx.arc(cx,cy,s/2,0,Math.PI*2);
-    ctx.moveTo(cx, cy - s/2); ctx.lineTo(cx, cy + s/2);
-  } else if(L === 'T'){
-    ctx.moveTo(cx - s/2, cy - s/2); ctx.lineTo(cx + s/2, cy - s/2);
-    ctx.moveTo(cx, cy - s/2); ctx.lineTo(cx, cy + s/2);
-  } else if(L === 'Y'){
-    ctx.moveTo(cx,cy); ctx.lineTo(cx, cy - s/2);
-    ctx.moveTo(cx,cy); ctx.lineTo(cx - s*0.45, cy + s*0.45);
-    ctx.moveTo(cx,cy); ctx.lineTo(cx + s*0.45, cy + s*0.45);
-  } else if(L === 'U'){
-    ctx.moveTo(cx - s/2, cy - 10); ctx.lineTo(cx + s/2, cy - 10);
-    ctx.moveTo(cx - s/2, cy + 10); ctx.lineTo(cx + s/2, cy + 10);
-  } else if(L === 'I'){
-    ctx.moveTo(cx, cy - s/2); ctx.lineTo(cx, cy + s/2);
-  } else if(L === 'O'){
-    ctx.arc(cx,cy,s/2,0,Math.PI*2);
-  } else if(L === 'P'){
-    ctx.arc(cx,cy,s*0.35,0,Math.PI*2);
-  } else if(L === 'A'){
-    const h = Math.sqrt(3) * (s/1.1) / 2;
-    ctx.moveTo(cx, cy - h);
-    ctx.lineTo(cx - s/1.1, cy + h);
-    ctx.lineTo(cx + s/1.1, cy + h);
-    ctx.closePath();
-    ctx.stroke();
-    ctx.fill();
-    return;
-  } else if(L === 'S'){
-    const r = s*0.22;
-    const offset = s*0.35;
-    ctx.arc(cx, cy - offset, r, 0, Math.PI*2);
-    ctx.moveTo(cx + r, cy - offset);
-    ctx.arc(cx, cy + offset/2, r, 0, Math.PI*2);
-    ctx.moveTo(cx + r, cy + offset/2);
-    ctx.arc(cx - offset*0.5, cy + offset*1.1, r, 0, Math.PI*2);
-  } else if(L === 'D'){
-    const r = s*0.28;
-    ctx.arc(cx, cy - r, r, 0, Math.PI*2);
-    ctx.moveTo(cx + r, cy - r);
-    ctx.arc(cx, cy + r, r, 0, Math.PI*2);
-  } else if(L === 'F'){
-    ctx.moveTo(cx - s/2, cy - s*0.12); ctx.lineTo(cx + s/2, cy - s*0.12);
-    ctx.moveTo(cx - s/2, cy + s*0.12); ctx.lineTo(cx + s/2, cy + s*0.12);
-  } else if(L === 'G'){
-    ctx.arc(cx, cy, Math.max(3, s*0.06), 0, Math.PI*2);
-  } else if(L === 'H'){
-    const a = s*0.42;
-    ctx.moveTo(cx - a, cy - a); ctx.lineTo(cx + a, cy + a);
-    ctx.moveTo(cx + a, cy - a); ctx.lineTo(cx - a, cy + a);
-    ctx.moveTo(cx - a, cy); ctx.lineTo(cx + a, cy);
-  } else if(L === 'J'){
-    ctx.moveTo(cx - s*0.45, cy - s*0.5); ctx.lineTo(cx + s*0.45, cy - s*0.5);
-    ctx.moveTo(cx, cy - s*0.5); ctx.lineTo(cx, cy + s*0.5);
-    ctx.moveTo(cx - s*0.45, cy + s*0.5); ctx.lineTo(cx + s*0.45, cy + s*0.5);
-  } else if(L === 'K'){
-    const a = s*0.35;
-    ctx.moveTo(cx - a, cy); ctx.lineTo(cx + a, cy);
-    ctx.moveTo(cx, cy - a); ctx.lineTo(cx, cy + a);
-  } else if(L === 'L'){
-    ctx.moveTo(cx, cy - s/2); ctx.lineTo(cx, cy + s/2);
-    ctx.moveTo(cx - s*0.35, cy); ctx.lineTo(cx + s*0.35, cy);
-  } else if(L === 'Z'){
-    ctx.moveTo(cx - s/2, cy - s*0.3); ctx.lineTo(cx + s/2, cy - s*0.3);
-    ctx.moveTo(cx, cy); ctx.arc(cx, cy, Math.max(3, s*0.06), 0, Math.PI*2);
-    ctx.moveTo(cx - s/3, cy + s*0.3); ctx.lineTo(cx + s/3, cy + s*0.3);
-  } else if(L === 'X'){
-    const a = s*0.45;
-    ctx.moveTo(cx - a, cy - a); ctx.lineTo(cx - a*0.25, cy - a*0.25);
-    ctx.moveTo(cx + a, cy - a); ctx.lineTo(cx + a*0.25, cy - a*0.25);
-    ctx.moveTo(cx - a, cy + a); ctx.lineTo(cx - a*0.25, cy + a*0.25);
-    ctx.moveTo(cx + a, cy + a); ctx.lineTo(cx + a*0.25, cy + a*0.25);
-  } else if(L === 'C'){
-    ctx.moveTo(cx + s*0.4, cy - s*0.4);
-    ctx.bezierCurveTo(cx - s*0.5, cy - s*0.5, cx - s*0.5, cy + s*0.5, cx + s*0.4, cy + s*0.4);
-  } else if(L === 'V'){
-    ctx.moveTo(cx - s*0.45, cy - s*0.45); ctx.lineTo(cx, cy + s*0.45); ctx.lineTo(cx + s*0.45, cy - s*0.45);
-  } else if(L === 'B'){
-    const r = s*0.18;
-    const off = s*0.22;
-    ctx.arc(cx - off, cy - off, r, 0, Math.PI*2);
-    ctx.moveTo(cx + off - r, cy - off);
-    ctx.arc(cx + off, cy - off, r, 0, Math.PI*2);
-    ctx.moveTo(cx - off, cy + off - r);
-    ctx.arc(cx - off, cy + off, r, 0, Math.PI*2);
-    ctx.moveTo(cx + off - r, cy + off);
-    ctx.arc(cx + off, cy + off, r, 0, Math.PI*2);
-  } else if(L === 'N'){
-    ctx.moveTo(cx, cy);
-    ctx.bezierCurveTo(cx - s*0.4, cy - s*0.35, cx - s*0.8, cy + s*0.2, cx, cy + s*0.5);
-    ctx.bezierCurveTo(cx + s*0.8, cy + s*0.2, cx + s*0.4, cy - s*0.35, cx, cy);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    return;
-  } else if(L === 'M'){
-    ctx.moveTo(cx - s*0.45, cy - s*0.45); ctx.lineTo(cx - s*0.45, cy + s*0.45);
-    ctx.arc(cx, cy, Math.max(3, s*0.06), 0, Math.PI*2);
-    ctx.moveTo(cx + s*0.45, cy - s*0.45); ctx.lineTo(cx + s*0.45, cy + s*0.45);
-  } else {
-    return;
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+  redrawAll();
+}
+
+function drawDot() {
+  push();
+  strokeWeight(6);
+  stroke(255,0,0,60);
+  point(20,20);
+  pop();
+}
+
+function drawShape(letter, x, y) {
+  push();
+  stroke(255,0,0,140);
+  strokeWeight(12);
+  noFill();
+  const s = 60;
+  let L = letter.toUpperCase();
+  switch(L){
+    case 'Q':
+      circle(x,y,s);
+      line(x-s/2,y,x+s/2,y);
+      break;
+    case 'W':
+      for(let i=-1;i<=1;i++) line(x+i*20,y-40,x+i*20,y+40);
+      break;
+    case 'E':
+      for(let i=-1;i<=1;i++) line(x-40,y+i*20,x+40,y+i*20);
+      break;
+    case 'R':
+      circle(x,y,s);
+      line(x,y-s/2,x,y+s/2);
+      break;
+    case 'T':
+      line(x-40,y-40,x+40,y-40);
+      line(x,y-40,x,y+40);
+      break;
+    case 'Y':
+      line(x,y,x,y-40);
+      line(x,y,x-30,y+40);
+      line(x,y,x+30,y+40);
+      break;
+    case 'U':
+      line(x-40,y-10,x+40,y-10);
+      line(x-40,y+10,x+40,y+10);
+      break;
+    case 'I':
+      line(x,y-40,x,y+40);
+      break;
+    case 'O':
+      circle(x,y,s);
+      break;
+    case 'P':
+      circle(x,y,s/1.8);
+      break;
+    case 'A':
+      let h = sqrt(3)*s/1.2;
+      triangle(x, y-h/2, x-s/1.2, y+h/2, x+s/1.2, y+h/2);
+      break;
+    case 'S':
+      circle(x, y-25, 25);
+      circle(x-22, y+20, 25);
+      circle(x+22, y+20, 25);
+      break;
+    case 'D':
+      circle(x, y-25, 30);
+      circle(x, y+25, 30);
+      break;
+    case 'F':
+      line(x-40,y-10,x+40,y-10);
+      line(x-40,y+10,x+40,y+10);
+      break;
+    case 'G':
+      point(x,y);
+      break;
+    case 'H':
+      line(x-30,y-30,x+30,y+30);
+      line(x+30,y-30,x-30,y+30);
+      line(x-30,y,x+30,y);
+      break;
+    case 'J':
+      line(x,y-40,x,y+40);
+      line(x-30,y,x+30,y);
+      break;
+    case 'K':
+      line(x-30,y,x+30,y);
+      line(x,y-30,x,y+30);
+      break;
+    case 'L':
+      line(x,y-40,x,y+40);
+      line(x-25,y,x+25,y);
+      break;
+    case 'Z':
+      line(x-40,y-30,x+40,y-30);
+      point(x,y);
+      line(x-40,y+30,x+40,y+30);
+      break;
+    case 'C':
+      bezier(x-30,y, x-60,y-40, x+60,y-40, x+30,y);
+      bezier(x-30,y, x-60,y+40, x+60,y+40, x+30,y);
+      break;
+    case 'V':
+      line(x-30,y-40,x,y+40);
+      line(x,y+40,x+30,y-40);
+      break;
+    case 'B':
+      let offs=[[ -20,-20],[20,-20],[-20,20],[20,20]];
+      for(let o of offs) circle(x+o[0],y+o[1],25);
+      break;
+    case 'N':
+      beginShape();
+      vertex(x,y);
+      bezierVertex(x-30,y-30,x-60,y+20,x,y+50);
+      bezierVertex(x+60,y+20,x+30,y-30,x,y);
+      endShape();
+      break;
+    case 'M':
+      line(x-40,y+60,x-40,y-60);
+      point(x,y);
+      line(x+40,y-60,x+40,y+60);
+      break;
   }
-  ctx.stroke();
+  pop();
 }
 
-function redraw(){
-  ctx.setTransform(1,0,0,1,0,0);
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.setTransform(scale,0,0,scale,0,0);
-  ctx.beginPath();
-  ctx.fillStyle = "rgba(255,0,0,0.18)";
-  ctx.arc(baseX*0.08, baseY*0.08, 4,0,Math.PI*2);
-  ctx.fill();
+function redrawAll(){
+  clear();
+  background(0);
+  drawDot();
   for(let c=0;c<history.length;c++){
     for(let r=0;r<history[c].length;r++){
-      const arr = history[c][r]||[];
-      if(arr.length===0) continue;
-      const cx = baseX + c*colSpacing;
-      const cy = baseY + r*rowSpacing;
-      for(let i=0;i<arr.length;i++){
-        drawShape(arr[i], cx, cy);
+      for(let l of history[c][r]){
+        drawShape(l,100 + c*colSpacing,100 + r*rowSpacing);
       }
     }
   }
 }
 
-function computeBoundingBox(){
-  let minX=Infinity, minY=Infinity, maxX=-Infinity, maxY=-Infinity;
-  for(let c=0;c<history.length;c++){
-    for(let r=0;r<history[c].length;r++){
-      const arr = history[c][r]||[];
-      if(arr.length===0) continue;
-      const cx = baseX + c*colSpacing;
-      const cy = baseY + r*rowSpacing;
-      const ext = size/2 + 10;
-      minX = Math.min(minX, cx - ext);
-      minY = Math.min(minY, cy - ext);
-      maxX = Math.max(maxX, cx + ext);
-      maxY = Math.max(maxY, cy + ext);
-    }
+function adjustZoom(){
+  let margin=100;
+  let maxX=(currentCol+1)*colSpacing;
+  let maxY=(currentRow+1)*rowSpacing;
+  if(maxX*scaleFactor>width-margin || maxY*scaleFactor>height-margin) scaleFactor*=0.9;
+  else if(scaleFactor<1 && maxX*scaleFactor<width-margin && maxY*scaleFactor<height-margin){
+    scaleFactor*=1.05;
+    if(scaleFactor>1) scaleFactor=1;
   }
-  if(minX===Infinity) return null;
-  return {minX,minY,maxX,maxY,width: maxX-minX,height: maxY-minY};
+  scaleFactor=constrain(scaleFactor,0.1,1);
+  redrawAll();
+  push();
+  scale(scaleFactor);
+  pop();
 }
 
-function recomputeZoomAndDraw(){
-  const bbox = computeBoundingBox();
-  if(!bbox){
-    scale = 1;
-    redraw();
-    return;
-  }
-  const availW = window.innerWidth - margin*2;
-  const availH = window.innerHeight - margin*2;
-  let required = 1;
-  if(bbox.width > availW || bbox.height > availH){
-    required = Math.min(availW / bbox.width, availH / bbox.height);
-    if(required > 1) required = 1;
-  } else {
-    required = 1;
-  }
-  scale = required;
-  redraw();
-}
-
-addEventListener('keydown', (e)=>{
-  if(e.key === ' '){ e.preventDefault(); currentRow++; addCellIfMissing(currentCol,currentRow); recomputeZoomAndDraw(); return; }
-  if(e.key === 'Enter'){ e.preventDefault(); currentCol++; currentRow = 0; addCellIfMissing(currentCol,currentRow); recomputeZoomAndDraw(); return; }
-  if(e.key === 'Backspace'){ e.preventDefault();
-    addCellIfMissing(currentCol,currentRow);
-    if(history[currentCol][currentRow] && history[currentCol][currentRow].length>0){
-      history[currentCol][currentRow] = [];
-      recomputeZoomAndDraw();
-      return;
-    }
-    if(currentRow > 0){
+function keyPressed(){
+  let k=key;
+  if(/[a-zA-Z]/.test(k)){
+    history[currentCol][currentRow].push(k);
+    redrawAll();
+  }else if(k===' '){
+    currentRow++;
+    if(!history[currentCol][currentRow]) history[currentCol][currentRow]=[];
+  }else if(k==='Enter'){
+    currentCol++;
+    currentRow=0;
+    if(!history[currentCol]) history[currentCol]=[[]];
+  }else if(k==='Backspace'){
+    let currentShapes=history[currentCol][currentRow];
+    if(currentShapes.length>0){
+      history[currentCol][currentRow]=[];
+    }else if(currentRow>0){
       currentRow--;
-      recomputeZoomAndDraw();
-      return;
-    }
-    if(currentCol > 0){
+    }else if(currentCol>0){
       currentCol--;
-      currentRow = (history[currentCol].length-1)>=0 ? history[currentCol].length-1 : 0;
-      if(!history[currentCol][currentRow]) history[currentCol][currentRow]=[];
-      recomputeZoomAndDraw();
-      return;
+      currentRow=history[currentCol].length-1;
     }
-    return;
+    redrawAll();
   }
-  if(/^[a-zA-Z]$/.test(e.key)){
-    addCellIfMissing(currentCol,currentRow);
-    history[currentCol][currentRow].push(e.key);
-    recomputeZoomAndDraw();
-    return;
-  }
-});
-
-redraw();
+  adjustZoom();
+}
 </script>
 </body>
 </html>
