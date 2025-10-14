@@ -12,13 +12,13 @@ let colSpacing = 150, rowSpacing = 150;
 let history = [[[]]];
 let currentCol = 0, currentRow = 0;
 let scaleFactor = 1;
-let posX = 100, posY = 100;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
   strokeWeight(10);
   stroke(255,0,0,140);
   noFill();
+  noLoop();
 }
 
 function windowResized() {
@@ -40,44 +40,19 @@ function drawShape(letter, x, y) {
   strokeWeight(12);
   noFill();
   const s = 60;
-  let L = letter.toUpperCase();
+  const L = letter.toUpperCase();
+
   switch(L){
-    case 'Q':
-      circle(x,y,s);
-      line(x-s/2,y,x+s/2,y);
-      break;
-    case 'W':
-      for(let i=-1;i<=1;i++) line(x+i*20,y-40,x+i*20,y+40);
-      break;
-    case 'E':
-      for(let i=-1;i<=1;i++) line(x-40,y+i*20,x+40,y+i*20);
-      break;
-    case 'R':
-      circle(x,y,s);
-      line(x,y-s/2,x,y+s/2);
-      break;
-    case 'T':
-      line(x-40,y-40,x+40,y-40);
-      line(x,y-40,x,y+40);
-      break;
-    case 'Y':
-      line(x,y,x,y-40);
-      line(x,y,x-30,y+40);
-      line(x,y,x+30,y+40);
-      break;
-    case 'U':
-      line(x-40,y-10,x+40,y-10);
-      line(x-40,y+10,x+40,y+10);
-      break;
-    case 'I':
-      line(x,y-40,x,y+40);
-      break;
-    case 'O':
-      circle(x,y,s);
-      break;
-    case 'P':
-      circle(x,y,s/1.8);
-      break;
+    case 'Q': circle(x,y,s); line(x-s/2,y,x+s/2,y); break;
+    case 'W': for(let i=-1;i<=1;i++) line(x+i*20,y-40,x+i*20,y+40); break;
+    case 'E': for(let i=-1;i<=1;i++) line(x-40,y+i*20,x+40,y+i*20); break;
+    case 'R': circle(x,y,s); line(x,y-s/2,x,y+s/2); break;
+    case 'T': line(x-40,y-40,x+40,y-40); line(x,y-40,x,y+40); break;
+    case 'Y': line(x,y,x,y-40); line(x,y,x-30,y+40); line(x,y,x+30,y+40); break;
+    case 'U': line(x-40,y-10,x+40,y-10); line(x-40,y+10,x+40,y+10); break;
+    case 'I': line(x,y-40,x,y+40); break;
+    case 'O': circle(x,y,s); break;
+    case 'P': circle(x,y,s/1.8); break;
     case 'A':
       let h = sqrt(3)*s/1.2;
       triangle(x, y-h/2, x-s/1.2, y+h/2, x+s/1.2, y+h/2);
@@ -91,47 +66,16 @@ function drawShape(letter, x, y) {
       circle(x, y-25, 30);
       circle(x, y+25, 30);
       break;
-    case 'F':
-      line(x-40,y-10,x+40,y-10);
-      line(x-40,y+10,x+40,y+10);
-      break;
-    case 'G':
-      point(x,y);
-      break;
-    case 'H':
-      line(x-30,y-30,x+30,y+30);
-      line(x+30,y-30,x-30,y+30);
-      line(x-30,y,x+30,y);
-      break;
-    case 'J':
-      line(x,y-40,x,y+40);
-      line(x-30,y,x+30,y);
-      break;
-    case 'K':
-      line(x-30,y,x+30,y);
-      line(x,y-30,x,y+30);
-      break;
-    case 'L':
-      line(x,y-40,x,y+40);
-      line(x-25,y,x+25,y);
-      break;
-    case 'Z':
-      line(x-40,y-30,x+40,y-30);
-      point(x,y);
-      line(x-40,y+30,x+40,y+30);
-      break;
-    case 'C':
-      bezier(x-30,y, x-60,y-40, x+60,y-40, x+30,y);
-      bezier(x-30,y, x-60,y+40, x+60,y+40, x+30,y);
-      break;
-    case 'V':
-      line(x-30,y-40,x,y+40);
-      line(x,y+40,x+30,y-40);
-      break;
-    case 'B':
-      let offs=[[ -20,-20],[20,-20],[-20,20],[20,20]];
-      for(let o of offs) circle(x+o[0],y+o[1],25);
-      break;
+    case 'F': line(x-40,y-10,x+40,y-10); line(x-40,y+10,x+40,y+10); break;
+    case 'G': point(x,y); break;
+    case 'H': line(x-30,y-30,x+30,y+30); line(x+30,y-30,x-30,y+30); line(x-30,y,x+30,y); break;
+    case 'J': line(x,y-40,x,y+40); line(x-30,y,x+30,y); break;
+    case 'K': line(x-30,y,x+30,y); line(x,y-30,x,y+30); break;
+    case 'L': line(x,y-40,x,y+40); line(x-25,y,x+25,y); break;
+    case 'Z': line(x-40,y-30,x+40,y-30); point(x,y); line(x-40,y+30,x+40,y+30); break;
+    case 'C': bezier(x-30,y, x-60,y-40, x+60,y-40, x+30,y); bezier(x-30,y, x-60,y+40, x+60,y+40, x+30,y); break;
+    case 'V': line(x-30,y-40,x,y+40); line(x,y+40,x+30,y-40); break;
+    case 'B': [[-20,-20],[20,-20],[-20,20],[20,20]].forEach(o=>circle(x+o[0],y+o[1],25)); break;
     case 'N':
       beginShape();
       vertex(x,y);
@@ -139,18 +83,15 @@ function drawShape(letter, x, y) {
       bezierVertex(x+60,y+20,x+30,y-30,x,y);
       endShape();
       break;
-    case 'M':
-      line(x-40,y+60,x-40,y-60);
-      point(x,y);
-      line(x+40,y-60,x+40,y+60);
-      break;
+    case 'M': line(x-40,y+60,x-40,y-60); point(x,y); line(x+40,y-60,x+40,y+60); break;
   }
   pop();
 }
 
 function redrawAll(){
-  clear();
   background(0);
+  push();
+  scale(scaleFactor);
   drawDot();
   for(let c=0;c<history.length;c++){
     for(let r=0;r<history[c].length;r++){
@@ -159,47 +100,45 @@ function redrawAll(){
       }
     }
   }
-}
-
-function adjustZoom(){
-  let margin=100;
-  let maxX=(currentCol+1)*colSpacing;
-  let maxY=(currentRow+1)*rowSpacing;
-  if(maxX*scaleFactor>width-margin || maxY*scaleFactor>height-margin) scaleFactor*=0.9;
-  else if(scaleFactor<1 && maxX*scaleFactor<width-margin && maxY*scaleFactor<height-margin){
-    scaleFactor*=1.05;
-    if(scaleFactor>1) scaleFactor=1;
-  }
-  scaleFactor=constrain(scaleFactor,0.1,1);
-  redrawAll();
-  push();
-  scale(scaleFactor);
   pop();
 }
 
+function adjustZoom(){
+  const margin=150;
+  const maxX=(currentCol+1)*colSpacing;
+  const maxY=(currentRow+1)*rowSpacing;
+  const fitsX = maxX*scaleFactor < windowWidth - margin;
+  const fitsY = maxY*scaleFactor < windowHeight - margin;
+
+  if(!fitsX || !fitsY){
+    scaleFactor *= 0.9;
+  } else if(fitsX && fitsY && scaleFactor < 1){
+    scaleFactor *= 1.05;
+    if(scaleFactor>1) scaleFactor=1;
+  }
+  redrawAll();
+}
+
 function keyPressed(){
-  let k=key;
-  if(/[a-zA-Z]/.test(k)){
-    history[currentCol][currentRow].push(k);
-    redrawAll();
-  }else if(k===' '){
+  if(key.length===1 && /[a-zA-Z]/.test(key)){
+    history[currentCol][currentRow].push(key);
+  }else if(key===' '){
     currentRow++;
     if(!history[currentCol][currentRow]) history[currentCol][currentRow]=[];
-  }else if(k==='Enter'){
+  }else if(key==='Enter'){
     currentCol++;
     currentRow=0;
     if(!history[currentCol]) history[currentCol]=[[]];
-  }else if(k==='Backspace'){
-    let currentShapes=history[currentCol][currentRow];
+  }else if(keyCode===BACKSPACE){
+    const currentShapes=history[currentCol][currentRow];
     if(currentShapes.length>0){
       history[currentCol][currentRow]=[];
-    }else if(currentRow>0){
+    } else if(currentRow>0){
       currentRow--;
-    }else if(currentCol>0){
+    } else if(currentCol>0){
       currentCol--;
       currentRow=history[currentCol].length-1;
     }
-    redrawAll();
   }
   adjustZoom();
 }
