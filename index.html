@@ -3,257 +3,81 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Shape Writer</title>
+<title>Shape Typing</title>
 <style>
-  body {
-    background-color: black;
-    overflow: hidden;
-    margin: 0;
-  }
-
-  canvas {
-    display: block;
-    background: black;
-    margin: 0 auto;
-  }
+  html,body{margin:0;padding:0;overflow:hidden;background:black;}
+  canvas{display:block;background:black;}
 </style>
 </head>
 <body>
-<canvas id="canvas"></canvas>
-
+<canvas id="c"></canvas>
 <script>
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
-let x = 100, y = 100;
-const colSpacing = 150;
-const rowSpacing = 150;
-let currentRow = 0;
-let currentCol = 0;
-let history = [[[]]]; // columns -> rows -> shapes
-let scale = 1;
-
-function adjustZoom() {
-  const margin = 150;
-  const maxX = (currentCol + 1) * colSpacing;
-  const maxY = (currentRow + 1) * rowSpacing;
-
-  const fitsX = maxX * scale < window.innerWidth - margin;
-  const fitsY = maxY * scale < window.innerHeight - margin;
-
-  if (!fitsX || !fitsY) {
-    scale *= 0.9;
-  } else if (fitsX && fitsY && scale < 1) {
-    scale *= 1.05;
-    if (scale > 1) scale = 1;
-  }
-
-  ctx.setTransform(scale, 0, 0, scale, 0, 0);
+const canvas=document.getElementById("c"),ctx=canvas.getContext("2d");
+let W=innerWidth,H=innerHeight;canvas.width=W;canvas.height=H;
+let scale=1,baseSize=60,spacing=baseSize*1.5;
+let posX=0,posY=0,col=0,row=0,grid=[];
+const color="rgba(255,0,0,0.55)";
+function resize(){W=innerWidth;H=innerHeight;canvas.width=W;canvas.height=H;draw();}
+addEventListener("resize",resize);
+function drawShape(ch,x,y,s){
+ ctx.lineWidth=s/8;ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineCap="round";ctx.lineJoin="round";
+ const r=s/2;const r2=r/2;
+ ctx.beginPath();
+ switch(ch){
+  case'Q':ctx.arc(x,y,r,0,2*Math.PI);ctx.moveTo(x-r,y);ctx.lineTo(x+r,y);break;
+  case'W':for(let i=-1;i<=1;i++){ctx.moveTo(x+i*r2/1.5,y-r);ctx.lineTo(x+i*r2/1.5,y+r);}break;
+  case'E':for(let i=-1;i<=1;i++){ctx.moveTo(x-r,y+i*r2/1.5);ctx.lineTo(x+r,y+i*r2/1.5);}break;
+  case'R':ctx.arc(x,y,r,0,2*Math.PI);ctx.moveTo(x,y-r);ctx.lineTo(x,y+r);break;
+  case'T':ctx.moveTo(x,y-r);ctx.lineTo(x,y+r);ctx.moveTo(x-r,y-r);ctx.lineTo(x+r,y-r);break;
+  case'Y':ctx.moveTo(x,y);ctx.lineTo(x,y-r);ctx.moveTo(x,y);ctx.lineTo(x-r2,y+r2);ctx.moveTo(x,y);ctx.lineTo(x+r2,y+r2);break;
+  case'U':ctx.moveTo(x-r,y-r2);ctx.lineTo(x+r,y-r2);ctx.moveTo(x-r,y+r2);ctx.lineTo(x+r,y+r2);break;
+  case'I':ctx.moveTo(x,y-r);ctx.lineTo(x,y+r);break;
+  case'O':ctx.arc(x,y,r,0,2*Math.PI);break;
+  case'P':ctx.arc(x,y,r*0.6,0,2*Math.PI);break;
+  case'A':ctx.moveTo(x,y-r);ctx.lineTo(x+r,y+r);ctx.lineTo(x-r,y+r);ctx.closePath();break;
+  case'S':for(let i=0;i<3;i++){let a=i*2*Math.PI/3;ctx.moveTo(x+r2*Math.cos(a),y+r2*Math.sin(a));ctx.arc(x+r2*Math.cos(a),y+r2*Math.sin(a),r/3,0,2*Math.PI);}break;
+  case'D':for(let i=-1;i<=1;i+=2){ctx.moveTo(x,y+i*r2);ctx.arc(x,y+i*r2,r/3,0,2*Math.PI);}break;
+  case'F':for(let i=-1;i<=1;i+=2){ctx.moveTo(x-r,y+i*r2/1.5);ctx.lineTo(x+r,y+i*r2/1.5);}break;
+  case'G':ctx.arc(x,y,r/6,0,2*Math.PI);break;
+  case'H':ctx.moveTo(x-r,y-r);ctx.lineTo(x+r,y+r);ctx.moveTo(x+r,y-r);ctx.lineTo(x-r,y+r);ctx.moveTo(x-r,y);ctx.lineTo(x+r,y);break;
+  case'J':ctx.moveTo(x-r,y-r);ctx.lineTo(x+r,y-r);ctx.moveTo(x,y-r);ctx.lineTo(x,y+r);ctx.moveTo(x-r,y+r);ctx.lineTo(x+r,y+r);break;
+  case'K':for(let a=0;a<Math.PI*2;a+=Math.PI/2){ctx.moveTo(x+r2*Math.cos(a),y+r2*Math.sin(a));ctx.lineTo(x+r2.5*Math.cos(a+Math.PI/4),y+r2.5*Math.sin(a+Math.PI/4));}break;
+  case'L':ctx.moveTo(x,y-r);ctx.lineTo(x,y+r);ctx.moveTo(x,y);ctx.lineTo(x+r,y);break;
+  case'Z':ctx.moveTo(x-r,y-r);ctx.lineTo(x+r,y-r);ctx.moveTo(x,y);ctx.arc(x,y,2,0,2*Math.PI);ctx.moveTo(x-r,y+r);ctx.lineTo(x+r,y+r);break;
+  case'X':for(let a=0;a<Math.PI*2;a+=Math.PI/2){ctx.moveTo(x+r2.2*Math.cos(a),y+r2.2*Math.sin(a));ctx.lineTo(x+r2*Math.cos(a+Math.PI/4),y+r2*Math.sin(a+Math.PI/4));}break;
+  case'C':ctx.arc(x,y,r,Math.PI/4,Math.PI*7/4);break;
+  case'V':ctx.moveTo(x-r,y-r);ctx.lineTo(x,y+r);ctx.lineTo(x+r,y-r);break;
+  case'B':for(let i=-1;i<=1;i+=2){for(let j=-1;j<=1;j+=2){ctx.moveTo(x+i*r2,y+j*r2);ctx.arc(x+i*r2,y+j*r2,r/4,0,2*Math.PI);}}break;
+  case'N':ctx.moveTo(x,y);ctx.arc(x-r/2,y-r/4,r/3,0,Math.PI,true);ctx.arc(x+r/2,y-r/4,r/3,0,Math.PI,true);ctx.lineTo(x,y+r/1.5);break;
+  case'M':for(let i=-1;i<=1;i++){if(i===0){ctx.arc(x+i*r2,y,r/10,0,2*Math.PI);}else{ctx.moveTo(x+i*r2,y-r);ctx.lineTo(x+i*r2,y+r);}}break;
+ }
+ ctx.stroke();ctx.fill();
 }
-
-function drawShape(letter, posX, posY) {
-  const size = 60;
-  ctx.strokeStyle = "rgba(255,0,0,0.55)";
-  ctx.fillStyle = "rgba(255,0,0,0.55)";
-  ctx.lineWidth = 12;
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
-  ctx.beginPath();
-
-  const L = letter.toUpperCase();
-
-  switch (L) {
-    case 'Q':
-      ctx.arc(posX, posY, size / 2, 0, Math.PI * 2);
-      ctx.moveTo(posX - size / 2, posY);
-      ctx.lineTo(posX + size / 2, posY);
-      break;
-    case 'W':
-      for (let i = -1; i <= 1; i++) {
-        ctx.moveTo(posX + i * 20, posY - 40);
-        ctx.lineTo(posX + i * 20, posY + 40);
-      }
-      break;
-    case 'E':
-      for (let i = -1; i <= 1; i++) {
-        ctx.moveTo(posX - 40, posY + i * 20);
-        ctx.lineTo(posX + 40, posY + i * 20);
-      }
-      break;
-    case 'R': // circle with vertical line
-      ctx.arc(posX, posY, size / 2, 0, Math.PI * 2);
-      ctx.moveTo(posX, posY - size / 2);
-      ctx.lineTo(posX, posY + size / 2);
-      break;
-    case 'T':
-      ctx.moveTo(posX - 40, posY - 40);
-      ctx.lineTo(posX + 40, posY - 40);
-      ctx.moveTo(posX, posY - 40);
-      ctx.lineTo(posX, posY + 40);
-      break;
-    case 'Y': // 3-way branch
-      ctx.moveTo(posX, posY);
-      ctx.lineTo(posX, posY - 40);
-      ctx.moveTo(posX, posY);
-      ctx.lineTo(posX - 30, posY + 40);
-      ctx.moveTo(posX, posY);
-      ctx.lineTo(posX + 30, posY + 40);
-      break;
-    case 'U':
-      ctx.moveTo(posX - 40, posY - 10);
-      ctx.lineTo(posX + 40, posY - 10);
-      ctx.moveTo(posX - 40, posY + 10);
-      ctx.lineTo(posX + 40, posY + 10);
-      break;
-    case 'I':
-      ctx.moveTo(posX, posY - 40);
-      ctx.lineTo(posX, posY + 40);
-      break;
-    case 'O':
-      ctx.arc(posX, posY, size / 2, 0, Math.PI * 2);
-      break;
-    case 'P': // smaller circle
-      ctx.arc(posX, posY, size / 3, 0, Math.PI * 2);
-      break;
-    case 'A': // larger triangle
-      const h = Math.sqrt(3) * (size / 1.2);
-      ctx.moveTo(posX, posY - h / 2);
-      ctx.lineTo(posX - size / 1.2, posY + h / 2);
-      ctx.lineTo(posX + size / 1.2, posY + h / 2);
-      ctx.closePath();
-      break;
-    case 'S': // "8"
-      ctx.arc(posX, posY - 25, 20, 0, Math.PI * 2);
-      ctx.moveTo(posX, posY + 25);
-      ctx.arc(posX, posY + 25, 20, 0, Math.PI * 2);
-      break;
-    case 'D': // Infinity
-      ctx.moveTo(posX - 25, posY);
-      ctx.bezierCurveTo(posX - 50, posY - 25, posX, posY - 25, posX + 25, posY);
-      ctx.bezierCurveTo(posX + 50, posY + 25, posX, posY + 25, posX - 25, posY);
-      break;
-    case 'H': // rounded X-like cross
-      ctx.moveTo(posX - 30, posY - 30);
-      ctx.lineTo(posX + 30, posY + 30);
-      ctx.moveTo(posX + 30, posY - 30);
-      ctx.lineTo(posX - 30, posY + 30);
-      break;
-    case 'J': // Y shape
-      ctx.moveTo(posX, posY);
-      ctx.lineTo(posX, posY + 40);
-      ctx.moveTo(posX, posY);
-      ctx.lineTo(posX - 30, posY - 40);
-      ctx.moveTo(posX, posY);
-      ctx.lineTo(posX + 30, posY - 40);
-      break;
-    case 'K': // star-like X
-      ctx.moveTo(posX - 30, posY);
-      ctx.lineTo(posX + 30, posY);
-      ctx.moveTo(posX, posY - 30);
-      ctx.lineTo(posX, posY + 30);
-      break;
-    case 'L': // vertical + mid line
-      ctx.moveTo(posX, posY - 40);
-      ctx.lineTo(posX, posY + 40);
-      ctx.moveTo(posX - 25, posY);
-      ctx.lineTo(posX + 25, posY);
-      break;
-    case 'Z': // 3 horizontal lines
-      ctx.moveTo(posX - 40, posY - 30);
-      ctx.lineTo(posX + 40, posY - 30);
-      ctx.moveTo(posX - 30, posY);
-      ctx.lineTo(posX + 30, posY);
-      ctx.moveTo(posX - 20, posY + 30);
-      ctx.lineTo(posX + 20, posY + 30);
-      break;
-    case 'C': // sideways 8
-      ctx.moveTo(posX - 25, posY);
-      ctx.bezierCurveTo(posX - 50, posY - 25, posX, posY - 25, posX + 25, posY);
-      ctx.bezierCurveTo(posX + 50, posY + 25, posX, posY + 25, posX - 25, posY);
-      break;
-    case 'B': // small 8
-      ctx.arc(posX, posY - 20, 18, 0, Math.PI * 2);
-      ctx.moveTo(posX, posY + 20);
-      ctx.arc(posX, posY + 20, 18, 0, Math.PI * 2);
-      break;
-    case 'F':
-      ctx.moveTo(posX - 40, posY - 10);
-      ctx.lineTo(posX + 40, posY - 10);
-      ctx.moveTo(posX - 40, posY + 10);
-      ctx.lineTo(posX + 40, posY + 10);
-      break;
-    case 'G':
-      ctx.arc(posX, posY, 5, 0, Math.PI * 2);
-      break;
-    case 'N': // heart
-      ctx.moveTo(posX, posY);
-      ctx.bezierCurveTo(posX - 30, posY - 30, posX - 60, posY + 20, posX, posY + 50);
-      ctx.bezierCurveTo(posX + 60, posY + 20, posX + 30, posY - 30, posX, posY);
-      break;
-    case 'M': // mirrored M
-      ctx.moveTo(posX - 40, posY + 60);
-      ctx.lineTo(posX - 40, posY - 60);
-      ctx.lineTo(posX, posY);
-      ctx.lineTo(posX + 40, posY - 60);
-      ctx.lineTo(posX + 40, posY + 60);
-      break;
-    default:
-      return;
-  }
-
-  ctx.stroke();
+function draw(){ctx.setTransform(scale,0,0,scale,0,0);ctx.clearRect(0,0,W,H);ctx.beginPath();ctx.arc(10,10,3,0,2*Math.PI);ctx.fillStyle="rgba(255,0,0,0.2)";ctx.fill();ctx.strokeStyle=color;for(let i=0;i<grid.length;i++){let g=grid[i];drawShape(g.ch,g.x,g.y,g.s);}}
+function checkZoom(){
+ let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+ grid.forEach(g=>{minX=Math.min(minX,g.x-g.s/2);maxX=Math.max(maxX,g.x+g.s/2);minY=Math.min(minY,g.y-g.s/2);maxY=Math.max(maxY,g.y+g.s/2);});
+ if(grid.length>0){
+  let needOut=minX<0||maxX>W||minY<0||maxY>H;
+  let needIn=!needOut&&(maxX-minX<W*0.9)&&(maxY-minY<H*0.9);
+  if(needOut)scale*=0.9;
+  if(needIn&&scale<1)scale*=1.1;
+ }
 }
-
-function redraw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  for (let c = 0; c < history.length; c++) {
-    for (let r = 0; r < history[c].length; r++) {
-      history[c][r].forEach(l => {
-        drawShape(l, 100 + c * colSpacing, 100 + r * rowSpacing);
-      });
-    }
-  }
+function addChar(ch){if(ch<'A'||ch>'Z')return;let x=posX+spacing*col,y=posY+spacing*row;
+ grid.push({ch,x,y,s:baseSize});draw();checkZoom();draw();}
+function delChar(){
+ if(grid.length===0)return;
+ grid.pop();draw();checkZoom();draw();
 }
-
-document.addEventListener('keydown', (e) => {
-  const key = e.key;
-
-  if (/^[a-zA-Z]$/.test(key)) {
-    drawShape(key, x, y);
-    history[currentCol][currentRow].push(key);
-  } else if (key === ' ') {
-    currentRow++;
-    if (!history[currentCol][currentRow]) history[currentCol][currentRow] = [];
-    y += rowSpacing;
-  } else if (key === 'Enter') {
-    currentCol++;
-    currentRow = 0;
-    if (!history[currentCol]) history[currentCol] = [[]];
-    x += colSpacing;
-    y = 100;
-  } else if (key === 'Backspace') {
-    e.preventDefault();
-    const currentShapes = history[currentCol][currentRow];
-    if (currentShapes.length > 0) {
-      history[currentCol][currentRow] = [];
-      redraw();
-    } else if (currentRow > 0) {
-      currentRow--;
-      y -= rowSpacing;
-      redraw();
-    } else if (currentCol > 0) {
-      currentCol--;
-      x -= colSpacing;
-      currentRow = history[currentCol].length - 1;
-      y = 100 + rowSpacing * currentRow;
-      redraw();
-    }
-  }
-
-  adjustZoom();
+addEventListener("keydown",e=>{
+ let k=e.key.toUpperCase();
+ if(k>='A'&&k<='Z'){addChar(k);}
+ else if(e.key===" "){row++;}
+ else if(e.key==="Enter"){row=0;col++;}
+ else if(e.key==="Backspace"){e.preventDefault();delChar();if(row>0)row--;else if(col>0){col--;row=0;}}
 });
+draw();
 </script>
 </body>
 </html>
