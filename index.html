@@ -3,296 +3,237 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Letters</title>
+<title>Random Shape Writer (p5.js)</title>
 <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.min.js"></script>
-<style>html,body{height:100%;margin:0;background:#000;overflow:hidden}</style>
+<style>
+html,body{height:100%;margin:0;background:#000;overflow:hidden;}
+</style>
 </head>
 <body>
 <script>
-let colSpacing = 150;
-let rowSpacing = 150;
-let baseX = 100;
-let baseY = 100;
-let sizeShape = 72;
+let sizeShape = 55;
+let shapes = []; // {letter, x, y}
+let occupied = []; // store used positions
+let currentPos = {x:0,y:0};
 
-let history = [[[]]]; // columns -> rows -> letters
-let currentCol = 0;
-let currentRow = 0;
-let scaleFactor = 1;
-let margin = 80;
-
-function setup() {
+function setup(){
   createCanvas(windowWidth, windowHeight);
-  noLoop();
-  strokeCap(ROUND);
-  strokeJoin(ROUND);
-  redrawAll();
+  noFill();
+  stroke(255,0,0,160);
+  strokeWeight(6);
+  pickNewSpot();
 }
 
 function windowResized(){
   resizeCanvas(windowWidth, windowHeight);
-  recomputeZoomAndDraw();
+  redrawAll();
+}
+
+function pickNewSpot(){
+  let tries = 0;
+  let spot;
+  do {
+    spot = {
+      x: random(sizeShape, width - sizeShape),
+      y: random(sizeShape, height - sizeShape)
+    };
+    tries++;
+    if(tries > 500) break;
+  } while(isOccupied(spot.x, spot.y));
+  currentPos = spot;
+  markOccupied(spot.x, spot.y);
+}
+
+function isOccupied(x,y){
+  return occupied.some(o => dist(o.x,o.y,x,y) < sizeShape*1.4);
+}
+
+function markOccupied(x,y){
+  occupied.push({x,y});
+}
+
+function freeSpot(x,y){
+  occupied = occupied.filter(o => dist(o.x,o.y,x,y) >= sizeShape*1.4);
+}
+
+function keyPressed(){
+  if(key.length === 1 && /[a-zA-Z]/.test(key)){
+    shapes.push({letter:key.toUpperCase(), x:currentPos.x, y:currentPos.y});
+    redrawAll();
+  } else if(key === ' '){
+    pickNewSpot();
+  } else if(keyCode === BACKSPACE){
+    if(shapes.length>0){
+      const idx = floor(random(shapes.length));
+      const removed = shapes.splice(idx,1)[0];
+      freeSpot(removed.x,removed.y);
+      redrawAll();
+    }
+  }
+}
+
+function redrawAll(){
+  background(0);
+  for(const s of shapes){
+    drawShape(s.letter, s.x, s.y);
+  }
+  drawDot();
 }
 
 function drawDot(){
   push();
-  strokeWeight(6);
   stroke(255,0,0,60);
+  strokeWeight(6);
   point(20,20);
   pop();
 }
 
-function drawShape(letter, cx, cy){
-  push();
-  stroke(255,0,0,140);
-  strokeWeight(max(6, sizeShape * 0.13));
-  noFill();
+function drawShape(L, cx, cy){
   const s = sizeShape;
-  const half = s/2;
-  const L = letter.toUpperCase();
-
-  // All shapes are centered on (cx,cy) so they stack in a box of approx size s
-  if(L === 'Q'){
-    circle(cx, cy, s);
-    line(cx - half, cy, cx + half, cy);
-  } else if(L === 'W'){
-    line(cx - 22, cy - half, cx - 22, cy + half);
-    line(cx,     cy - half, cx,     cy + half);
-    line(cx + 22,cy - half, cx + 22, cy + half);
-  } else if(L === 'E'){
-    line(cx - half, cy - 18, cx + half, cy - 18);
-    line(cx - half, cy,      cx + half, cy);
-    line(cx - half, cy + 18, cx + half, cy + 18);
-  } else if(L === 'R'){
-    circle(cx, cy, s);
-    line(cx, cy - half, cx, cy + half);
-  } else if(L === 'T'){
-    line(cx - half, cy - half, cx + half, cy - half);
-    line(cx, cy - half, cx, cy + half);
-  } else if(L === 'Y'){
-    line(cx, cy - half*0.55, cx, cy);
-    line(cx, cy, cx - half*0.6, cy + half*0.6);
-    line(cx, cy, cx + half*0.6, cy + half*0.6);
-  } else if(L === 'U'){
-    line(cx - half, cy - 10, cx + half, cy - 10);
-    line(cx - half, cy + 10, cx + half, cy + 10);
-  } else if(L === 'I'){
-    // Capital I look: vertical line with short top and bottom bars (user asked J->I earlier; keep forms separate)
-    line(cx, cy - half, cx, cy + half);
-  } else if(L === 'O'){
-    circle(cx, cy, s);
-  } else if(L === 'P'){
-    circle(cx, cy, s * 0.55);
-  } else if(L === 'A'){
-    // Equilateral triangle centered: compute vertices so centroid is at (cx,cy)
-    const triH = Math.sqrt(3) * (s * 0.55);
-    const vx1 = cx, vy1 = cy - triH / 3; // top vertex moved so centroid at cy
-    const vx2 = cx - (s*0.55)/2, vy2 = cy + triH * 2/6;
-    const vx3 = cx + (s*0.55)/2, vy3 = cy + triH * 2/6;
-    noFill();
-    triangle(vx1, vy1, vx2, vy2, vx3, vy3);
-  } else if(L === 'S'){
-    // 3 circles forming an equilateral triangle arrangement centered at (cx,cy)
-    const r = s * 0.22;
-    const triR = s * 0.42;
-    // positions at 90deg, 210deg, 330deg to make an upright small triangle
-    circle(cx, cy - triR * 0.5, r*2);
-    circle(cx - triR * 0.433, cy + triR * 0.25, r*2);
-    circle(cx + triR * 0.433, cy + triR * 0.25, r*2);
-  } else if(L === 'D'){
-    // two circles vertical, centered
-    const r = s * 0.28;
-    circle(cx, cy - r * 0.5, r*2);
-    circle(cx, cy + r * 0.5, r*2);
-  } else if(L === 'F'){
-    line(cx - half, cy - 10, cx + half, cy - 10);
-    line(cx - half, cy + 10, cx + half, cy + 10);
-  } else if(L === 'G'){
-    point(cx, cy);
-  } else if(L === 'H'){
-    // arrowed ends (X-like) plus middle horizontal to look like H with arrowed ends
-    const a = s * 0.45;
-    line(cx - a, cy - a, cx + a, cy + a);
-    line(cx + a, cy - a, cx - a, cy + a);
-    line(cx - a, cy, cx + a, cy);
-  } else if(L === 'J'){
-    // user requested "looks like capital I with a line at top and bottom" (reversed H earlier)
-    // draw a capital I: top bar, vertical, bottom bar
-    const barW = s * 0.6;
-    const barYtop = cy - half;
-    const barYbot = cy + half;
-    line(cx - barW/2, barYtop, cx + barW/2, barYtop); // top
-    line(cx, cy - half * 0.6, cx, cy + half * 0.6); // vertical
-    line(cx - barW/2, barYbot, cx + barW/2, barYbot); // bottom
-  } else if(L === 'K'){
-    // symmetric X-like short arms (star)
-    const a = s * 0.35;
-    line(cx - a, cy, cx + a, cy);
-    line(cx, cy - a, cx, cy + a);
-  } else if(L === 'L'){
-    line(cx, cy - half, cx, cy + half);
-    line(cx - s*0.35, cy, cx + s*0.35, cy);
-  } else if(L === 'Z'){
-    line(cx - half, cy - s*0.3, cx + half, cy - s*0.3);
-    point(cx, cy);
-    line(cx - half*0.6, cy + s*0.3, cx + half*0.6, cy + s*0.3);
-  } else if(L === 'X'){
-    // 4 short lines pointing inward but not meeting
-    const a = s * 0.45;
-    const gap = s * 0.12;
-    // top-left toward center
-    line(cx - a, cy - a, cx - gap, cy - gap);
-    // top-right
-    line(cx + a, cy - a, cx + gap, cy - gap);
-    // bottom-left
-    line(cx - a, cy + a, cx - gap, cy + gap);
-    // bottom-right
-    line(cx + a, cy + a, cx + gap, cy + gap);
-  } else if(L === 'C'){
-    // rounded mirrored C — draw two opposing bezier curves forming a curved X-like mirrored C
-    bezier(cx - s*0.25, cy - s*0.25, cx - s*0.9, cy - s*0.5, cx + s*0.6, cy - s*0.6, cx + s*0.25, cy);
-    bezier(cx - s*0.25, cy + s*0.25, cx - s*0.9, cy + s*0.5, cx + s*0.6, cy + s*0.6, cx + s*0.25, cy);
-  } else if(L === 'V'){
-    line(cx - s*0.45, cy - s*0.45, cx, cy + s*0.45);
-    line(cx, cy + s*0.45, cx + s*0.45, cy - s*0.45);
-  } else if(L === 'B'){
-    // 4 clean circles forming a square, centered
-    const r = s * 0.22;
-    const off = s * 0.28;
-    circle(cx - off, cy - off, r*2);
-    circle(cx + off, cy - off, r*2);
-    circle(cx - off, cy + off, r*2);
-    circle(cx + off, cy + off, r*2);
-  } else if(L === 'N'){
-    // heart-like but centered a bit higher so it stacks well
-    beginShape();
-    vertex(cx, cy + s*0.12);
-    bezierVertex(cx - s*0.45, cy - s*0.18, cx - s*0.8, cy + s*0.25, cx, cy + s*0.45);
-    bezierVertex(cx + s*0.8, cy + s*0.25, cx + s*0.45, cy - s*0.18, cx, cy + s*0.12);
-    endShape(CLOSE);
-  } else if(L === 'M'){
-    // three vertical lines; middle one as a dot
-    const off = s * 0.35;
-    line(cx - off, cy - s*0.45, cx - off, cy + s*0.45);
-    point(cx, cy);
-    line(cx + off, cy - s*0.45, cx + off, cy + s*0.45);
-  }
-  pop();
-}
-
-function redrawAll(){
-  clear();
-  background(0);
+  const h = s/2;
   push();
-  scale(scaleFactor);
-  drawDot();
-  for(let c=0;c<history.length;c++){
-    for(let r=0;r<history[c].length;r++){
-      const arr = history[c][r] || [];
-      if(arr.length === 0) continue;
-      const cx = baseX + c*colSpacing;
-      const cy = baseY + r*rowSpacing;
-      for(let i=0;i<arr.length;i++){
-        drawShape(arr[i], cx, cy);
+  stroke(255,0,0,180);
+  strokeWeight(5);
+  noFill();
+  switch(L){
+    case 'Q':
+      circle(cx, cy, s);
+      line(cx - h, cy, cx + h, cy);
+      break;
+    case 'W':
+      // square
+      rectMode(CENTER);
+      rect(cx, cy, s, s);
+      break;
+    case 'E':
+      // hexagon
+      beginShape();
+      for(let i=0;i<6;i++){
+        let ang = TWO_PI/6 * i - PI/6;
+        vertex(cx + cos(ang)*h, cy + sin(ang)*h);
       }
-    }
+      endShape(CLOSE);
+      break;
+    case 'R':
+      circle(cx, cy, s);
+      line(cx, cy - h, cx, cy + h);
+      break;
+    case 'T':
+      line(cx - h, cy - h, cx + h, cy - h);
+      line(cx, cy - h, cx, cy + h);
+      break;
+    case 'Y':
+      line(cx, cy - h*0.6, cx, cy);
+      line(cx, cy, cx - h*0.6, cy + h*0.6);
+      line(cx, cy, cx + h*0.6, cy + h*0.6);
+      break;
+    case 'U':
+      line(cx - h, cy - 10, cx + h, cy - 10);
+      line(cx - h, cy + 10, cx + h, cy + 10);
+      break;
+    case 'I':
+      line(cx, cy - h, cx, cy + h);
+      break;
+    case 'O':
+      circle(cx, cy, s);
+      break;
+    case 'P':
+      circle(cx, cy, s*0.6);
+      break;
+    case 'A':
+      const triH = Math.sqrt(3)*(s*0.5);
+      const vx1 = cx, vy1 = cy - triH/3;
+      const vx2 = cx - s*0.5/2, vy2 = cy + triH*2/6;
+      const vx3 = cx + s*0.5/2, vy3 = cy + triH*2/6;
+      triangle(vx1,vy1,vx2,vy2,vx3,vy3);
+      break;
+    case 'S':
+      const rS = s*0.22;
+      const triR = s*0.42;
+      circle(cx, cy - triR*0.5, rS*2);
+      circle(cx - triR*0.433, cy + triR*0.25, rS*2);
+      circle(cx + triR*0.433, cy + triR*0.25, rS*2);
+      break;
+    case 'D':
+      const rD = s*0.28;
+      circle(cx, cy - rD*0.5, rD*2);
+      circle(cx, cy + rD*0.5, rD*2);
+      break;
+    case 'F':
+      line(cx - h, cy - 10, cx + h, cy - 10);
+      line(cx - h, cy + 10, cx + h, cy + 10);
+      break;
+    case 'G':
+      point(cx, cy);
+      break;
+    case 'H':
+      const aH = s*0.45;
+      line(cx - aH, cy - aH, cx + aH, cy + aH);
+      line(cx + aH, cy - aH, cx - aH, cy + aH);
+      line(cx - aH, cy, cx + aH, cy);
+      break;
+    case 'J':
+      const barW = s*0.6;
+      const barYtop = cy - h;
+      const barYbot = cy + h;
+      line(cx - barW/2, barYtop, cx + barW/2, barYtop);
+      line(cx, cy - h*0.6, cx, cy + h*0.6);
+      line(cx - barW/2, barYbot, cx + barW/2, barYbot);
+      break;
+    case 'K':
+      const aK = s*0.35;
+      line(cx - aK, cy, cx + aK, cy);
+      line(cx, cy - aK, cx, cy + aK);
+      break;
+    case 'L':
+      line(cx, cy - h, cx, cy + h);
+      line(cx - s*0.35, cy, cx + s*0.35, cy);
+      break;
+    case 'Z':
+      line(cx - h, cy - s*0.3, cx + h, cy - s*0.3);
+      point(cx, cy);
+      line(cx - h*0.6, cy + s*0.3, cx + h*0.6, cy + s*0.3);
+      break;
+    case 'X':
+      const aX = s*0.45;
+      const gap = s*0.12;
+      line(cx - aX, cy - aX, cx - gap, cy - gap);
+      line(cx + aX, cy - aX, cx + gap, cy - gap);
+      line(cx - aX, cy + aX, cx - gap, cy + gap);
+      line(cx + aX, cy + aX, cx + gap, cy + gap);
+      break;
+    case 'C':
+      bezier(cx - s*0.25, cy - s*0.25, cx - s*0.9, cy - s*0.5, cx + s*0.6, cy - s*0.6, cx + s*0.25, cy);
+      bezier(cx - s*0.25, cy + s*0.25, cx - s*0.9, cy + s*0.5, cx + s*0.6, cy + s*0.6, cx + s*0.25, cy);
+      break;
+    case 'V':
+      line(cx - s*0.45, cy - s*0.45, cx, cy + s*0.45);
+      line(cx, cy + s*0.45, cx + s*0.45, cy - s*0.45);
+      break;
+    case 'B':
+      const rB = s*0.22;
+      const offB = s*0.28;
+      circle(cx - offB, cy - offB, rB*2);
+      circle(cx + offB, cy - offB, rB*2);
+      circle(cx - offB, cy + offB, rB*2);
+      circle(cx + offB, cy + offB, rB*2);
+      break;
+    case 'N':
+      beginShape();
+      vertex(cx, cy + s*0.1);
+      bezierVertex(cx - s*0.45, cy - s*0.18, cx - s*0.8, cy + s*0.25, cx, cy + s*0.45);
+      bezierVertex(cx + s*0.8, cy + s*0.25, cx + s*0.45, cy - s*0.18, cx, cy + s*0.1);
+      endShape(CLOSE);
+      break;
+    case 'M':
+      const offM = s*0.35;
+      line(cx - offM, cy - s*0.45, cx - offM, cy + s*0.45);
+      point(cx, cy);
+      line(cx + offM, cy - s*0.45, cx + offM, cy + s*0.45);
+      break;
   }
   pop();
-  // p5 doesn't automatically show changes after noLoop, so we call redraw() implicitly:
-  // but since we draw directly, nothing else required.
 }
-
-function computeBoundingBox(){
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  for(let c=0;c<history.length;c++){
-    for(let r=0;r<history[c].length;r++){
-      const arr = history[c][r] || [];
-      if(arr.length === 0) continue;
-      const cx = baseX + c*colSpacing;
-      const cy = baseY + r*rowSpacing;
-      const ext = sizeShape/2 + 10;
-      minX = Math.min(minX, cx - ext);
-      minY = Math.min(minY, cy - ext);
-      maxX = Math.max(maxX, cx + ext);
-      maxY = Math.max(maxY, cy + ext);
-    }
-  }
-  if(minX === Infinity) return null;
-  return {minX,minY,maxX,maxY,width:maxX-minX,height:maxY-minY};
-}
-
-function recomputeZoomAndDraw(){
-  const bbox = computeBoundingBox();
-  if(!bbox){
-    scaleFactor = 1;
-    redrawAll();
-    return;
-  }
-  const availW = windowWidth - margin*2;
-  const availH = windowHeight - margin*2;
-  let required = 1;
-  if(bbox.width > availW || bbox.height > availH){
-    required = Math.min(availW / bbox.width, availH / bbox.height);
-    if(required > 1) required = 1;
-  } else {
-    required = 1;
-  }
-  scaleFactor = required;
-  redrawAll();
-}
-
-function keyPressed(){
-  if(key === ' '){
-    // new row (space)
-    currentRow++;
-    if(!history[currentCol]) history[currentCol]=[];
-    if(!history[currentCol][currentRow]) history[currentCol][currentRow]=[];
-    recomputeZoomAndDraw();
-    return;
-  }
-  if(key === 'Enter'){
-    currentCol++;
-    currentRow = 0;
-    if(!history[currentCol]) history[currentCol]=[];
-    if(!history[currentCol][currentRow]) history[currentCol][currentRow]=[];
-    recomputeZoomAndDraw();
-    return;
-  }
-  if(keyCode === BACKSPACE){
-    // delete entire current spot; if empty move up/left (but not past first)
-    if(!history[currentCol]) history[currentCol]=[];
-    if(!history[currentCol][currentRow]) history[currentCol][currentRow]=[];
-    if(history[currentCol][currentRow].length > 0){
-      history[currentCol][currentRow] = [];
-      recomputeZoomAndDraw();
-      return;
-    }
-    if(currentRow > 0){
-      currentRow--;
-      recomputeZoomAndDraw();
-      return;
-    }
-    if(currentCol > 0){
-      currentCol--;
-      currentRow = history[currentCol].length - 1;
-      if(currentRow < 0) currentRow = 0;
-      if(!history[currentCol][currentRow]) history[currentCol][currentRow]=[];
-      recomputeZoomAndDraw();
-      return;
-    }
-    // at very first cell and empty: nothing
-    return;
-  }
-  // letters
-  if(key.length === 1 && /[a-zA-Z]/.test(key)){
-    if(!history[currentCol]) history[currentCol]=[];
-    if(!history[currentCol][currentRow]) history[currentCol][currentRow]=[];
-    history[currentCol][currentRow].push(key);
-    recomputeZoomAndDraw();
-    return;
-  }
-}
-
 </script>
 </body>
 </html>
