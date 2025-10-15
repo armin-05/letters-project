@@ -13,7 +13,7 @@ html,body{height:100%;margin:0;background:#000;overflow:hidden;}
 <script>
 let sizeShape = 55;
 let shapes = []; // {letter, x, y}
-let occupied = []; // store used positions
+let occupied = [];
 let currentPos = {x:0,y:0};
 
 function setup(){
@@ -60,15 +60,21 @@ function keyPressed(){
   if(key.length === 1 && /[a-zA-Z]/.test(key)){
     shapes.push({letter:key.toUpperCase(), x:currentPos.x, y:currentPos.y});
     redrawAll();
-  } else if(key === ' '){
+  } 
+  else if(key === ' '){
     pickNewSpot();
-  } else if(keyCode === BACKSPACE){
-    if(shapes.length>0){
-      const idx = floor(random(shapes.length));
-      const removed = shapes.splice(idx,1)[0];
-      freeSpot(removed.x,removed.y);
-      redrawAll();
-    }
+  } 
+  else if(keyCode === BACKSPACE){
+    // delete all shapes from the current space
+    shapes = shapes.filter(s => dist(s.x, s.y, currentPos.x, currentPos.y) >= sizeShape*1.4);
+    freeSpot(currentPos.x,currentPos.y);
+    redrawAll();
+  }
+  else if(keyCode === DELETE){
+    // delete everything
+    shapes = [];
+    occupied = [];
+    redrawAll();
   }
 }
 
@@ -101,12 +107,10 @@ function drawShape(L, cx, cy){
       line(cx - h, cy, cx + h, cy);
       break;
     case 'W':
-      // square
       rectMode(CENTER);
       rect(cx, cy, s, s);
       break;
     case 'E':
-      // hexagon
       beginShape();
       for(let i=0;i<6;i++){
         let ang = TWO_PI/6 * i - PI/6;
