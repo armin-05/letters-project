@@ -47,17 +47,19 @@
   /* KakaoTalk window image (no stretching) */
   #kakaoImage {
     display: block;
-    max-width: 100%;
     height: auto;
+    width: auto;
+    max-width: 100%;
+    max-height: 100%;
   }
 
-  /* Invisible close button (click area over the image X) */
+  /* Invisible close button (matches Kakao's X area) */
   #closeBtn {
     position: absolute;
-    top: 10px;
-    right: 10px;
-    width: 30px;
-    height: 30px;
+    top: 8px;
+    right: 8px;
+    width: 32px;
+    height: 32px;
     background: transparent;
     cursor: pointer;
     border: none;
@@ -97,14 +99,15 @@
     }
   });
 
-  // --- Show window when icon clicked (only if hidden) ---
+  // --- Show the window only if hidden ---
   icon.addEventListener('click', () => {
-    if (kakaoWindow.style.display === 'none') {
+    const isHidden = window.getComputedStyle(kakaoWindow).display === 'none';
+    if (isHidden) {
       kakaoWindow.style.display = 'block';
     }
   });
 
-  // --- Move the Kakao window only from the top bar ---
+  // --- Move the Kakao window from the top bar only ---
   let draggingWindow = false, winOffsetX = 0, winOffsetY = 0;
   kakaoTopBar.addEventListener('mousedown', e => {
     draggingWindow = true;
@@ -120,7 +123,7 @@
     }
   });
 
-  // --- Close the Kakao window when invisible X area clicked ---
+  // --- Invisible X close button ---
   closeBtn.addEventListener('click', () => {
     kakaoWindow.style.display = 'none';
   });
