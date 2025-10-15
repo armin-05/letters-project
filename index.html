@@ -66,6 +66,23 @@
     outline: none;
     z-index: 20;
   }
+
+  /* Typing area overlay */
+  #typingArea {
+    position: absolute;
+    left: 10px;
+    bottom: 18px; /* Adjust based on where the white area starts */
+    width: calc(100% - 20px);
+    height: 30px;
+    font-family: Arial, sans-serif;
+    font-size: 15px;
+    color: black;
+    background: transparent;
+    border: none;
+    outline: none;
+    resize: none;
+    z-index: 15;
+  }
 </style>
 </head>
 <body>
@@ -76,6 +93,7 @@
   <div id="kakaoTopBar"></div>
   <button id="closeBtn"></button>
   <img id="kakaoImage" src="Screenshot 2025-10-15 144717.png" alt="Kakao Window">
+  <textarea id="typingArea" placeholder="" spellcheck="false"></textarea>
 </div>
 
 <script>
@@ -83,6 +101,10 @@
   const kakaoWindow = document.getElementById('kakaoWindow');
   const kakaoTopBar = document.getElementById('kakaoTopBar');
   const closeBtn = document.getElementById('closeBtn');
+  const typingArea = document.getElementById('typingArea');
+
+  // Save typed text between sessions in memory
+  let savedText = "";
 
   // --- Move the icon freely ---
   let draggingIcon = false, offsetX = 0, offsetY = 0;
@@ -104,6 +126,7 @@
     const isHidden = window.getComputedStyle(kakaoWindow).display === 'none';
     if (isHidden) {
       kakaoWindow.style.display = 'block';
+      typingArea.value = savedText; // restore text
     }
   });
 
@@ -126,6 +149,19 @@
   // --- Invisible X close button ---
   closeBtn.addEventListener('click', () => {
     kakaoWindow.style.display = 'none';
+    savedText = typingArea.value; // remember text when closed
+    typingArea.value = ""; // clear visible text
+  });
+
+  // --- Focus typing area when clicking bottom white part ---
+  kakaoWindow.addEventListener('click', e => {
+    const rect = kakaoWindow.getBoundingClientRect();
+    const clickY = e.clientY - rect.top;
+    const clickFromBottom = rect.height - clickY;
+    // approximate white area near bottom (60px zone)
+    if (clickFromBottom < 60) {
+      typingArea.focus();
+    }
   });
 </script>
 
