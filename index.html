@@ -1,250 +1,134 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Random Shape Writer v2</title>
-<script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gf simluator</title>
 <style>
-html,body{height:100%;margin:0;background:#000;overflow:hidden;}
+  body {
+    margin: 0;
+    background-color: black;
+    overflow: hidden;
+  }
+
+  /* KakaoTalk icon */
+  #icon {
+    position: absolute;
+    top: 100px;
+    left: 100px;
+    width: 80px;
+    height: 80px;
+    cursor: grab;
+  }
+
+  /* Floating Kakao window */
+  #kakaoWindow {
+    position: absolute;
+    top: 200px;
+    left: 200px;
+    width: 400px;
+    height: 600px;
+    border-radius: 8px;
+    overflow: hidden;
+    display: none;
+    cursor: default;
+  }
+
+  /* Top drag bar (for moving) */
+  #kakaoTopBar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 40px;
+    width: 100%;
+    background: rgba(0, 0, 0, 0);
+    cursor: grab;
+  }
+
+  /* Close (X) button */
+  #closeBtn {
+    position: absolute;
+    right: 8px;
+    top: 8px;
+    width: 20px;
+    height: 20px;
+    color: white;
+    font-weight: bold;
+    font-family: Arial, sans-serif;
+    cursor: pointer;
+    text-align: center;
+    line-height: 20px;
+    border-radius: 4px;
+  }
+
+  #closeBtn:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+
+  #kakaoImage {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
 </style>
 </head>
 <body>
+
+<img id="icon" src="Screenshot 2025-10-15 144240.png" alt="Kakao Icon">
+
+<div id="kakaoWindow">
+  <div id="kakaoTopBar"></div>
+  <div id="closeBtn">X</div>
+  <img id="kakaoImage" src="Screenshot 2025-10-15 144717.png" alt="Kakao Window">
+</div>
+
 <script>
-let sizeShape = 55;
-let shapes = []; // {letter, x, y}
-let occupied = []; // positions {x,y}
-let currentPos = {x:0,y:0};
-let lettersTyped = 0;
+  const icon = document.getElementById('icon');
+  const kakaoWindow = document.getElementById('kakaoWindow');
+  const kakaoTopBar = document.getElementById('kakaoTopBar');
+  const closeBtn = document.getElementById('closeBtn');
 
-function setup(){
-  createCanvas(windowWidth, windowHeight);
-  noFill();
-  stroke(255,0,0,160);
-  strokeWeight(6);
-  pickNewSpot();
-}
-
-function windowResized(){
-  resizeCanvas(windowWidth, windowHeight);
-  redrawAll();
-}
-
-function pickNewSpot(){
-  let tries = 0;
-  let spot;
-  do {
-    spot = {
-      x: random(sizeShape, width - sizeShape),
-      y: random(sizeShape, height - sizeShape)
-    };
-    tries++;
-    if(tries > 500) break;
-  } while(isOccupied(spot.x, spot.y));
-  currentPos = spot;
-  markOccupied(spot.x, spot.y);
-}
-
-function isOccupied(x,y){
-  return occupied.some(o => dist(o.x,o.y,x,y) < sizeShape*1.4);
-}
-
-function markOccupied(x,y){
-  occupied.push({x,y});
-}
-
-function freeSpot(x,y){
-  occupied = occupied.filter(o => dist(o.x,o.y,x,y) >= sizeShape*1.4);
-}
-
-function keyPressed(){
-  if(key.length === 1 && /[a-zA-Z]/.test(key)){
-    shapes.push({letter:key.toUpperCase(), x:currentPos.x, y:currentPos.y});
-    lettersTyped++;
-    if(lettersTyped >= 4){
-      lettersTyped = 0;
-      pickNewSpot();
+  // --- Move the icon freely ---
+  let draggingIcon = false, offsetX = 0, offsetY = 0;
+  icon.addEventListener('mousedown', e => {
+    draggingIcon = true;
+    offsetX = e.offsetX;
+    offsetY = e.offsetY;
+  });
+  document.addEventListener('mouseup', () => draggingIcon = false);
+  document.addEventListener('mousemove', e => {
+    if (draggingIcon) {
+      icon.style.left = e.pageX - offsetX + 'px';
+      icon.style.top = e.pageY - offsetY + 'px';
     }
-    redrawAll();
-  } 
-  else if(keyCode === BACKSPACE){
-    if(occupied.length > 0){
-      // pick random occupied spot
-      let idx = floor(random(occupied.length));
-      let pos = occupied[idx];
-      // delete all shapes from that spot
-      shapes = shapes.filter(s => dist(s.x, s.y, pos.x, pos.y) >= sizeShape*1.4);
-      freeSpot(pos.x,pos.y);
-      redrawAll();
+  });
+
+  // --- Show/Hide window when icon clicked ---
+  icon.addEventListener('click', () => {
+    kakaoWindow.style.display = kakaoWindow.style.display === 'none' ? 'block' : 'none';
+  });
+
+  // --- Move the Kakao window from the top bar ---
+  let draggingWindow = false, winOffsetX = 0, winOffsetY = 0;
+  kakaoTopBar.addEventListener('mousedown', e => {
+    draggingWindow = true;
+    const rect = kakaoWindow.getBoundingClientRect();
+    winOffsetX = e.clientX - rect.left;
+    winOffsetY = e.clientY - rect.top;
+  });
+  document.addEventListener('mouseup', () => draggingWindow = false);
+  document.addEventListener('mousemove', e => {
+    if (draggingWindow) {
+      kakaoWindow.style.left = e.clientX - winOffsetX + 'px';
+      kakaoWindow.style.top = e.clientY - winOffsetY + 'px';
     }
-  }
-  else if(keyCode === DELETE){
-    shapes = [];
-    occupied = [];
-    redrawAll();
-  }
-}
+  });
 
-function redrawAll(){
-  background(0);
-  for(const s of shapes){
-    drawShape(s.letter, s.x, s.y);
-  }
-  drawDot();
-}
-
-function drawDot(){
-  push();
-  stroke(255,0,0,60);
-  strokeWeight(6);
-  point(20,20);
-  pop();
-}
-
-function drawShape(L, cx, cy){
-  const s = sizeShape;
-  const h = s/2;
-  push();
-  stroke(255,0,0,180);
-  strokeWeight(5);
-  noFill();
-  switch(L){
-    case 'Q':
-      circle(cx, cy, s);
-      line(cx - h, cy, cx + h, cy);
-      break;
-    case 'W':
-      rectMode(CENTER);
-      rect(cx, cy, s, s);
-      break;
-    case 'E':
-      beginShape();
-      for(let i=0;i<6;i++){
-        let ang = TWO_PI/6 * i - PI/6;
-        vertex(cx + cos(ang)*h, cy + sin(ang)*h);
-      }
-      endShape(CLOSE);
-      break;
-    case 'R':
-      circle(cx, cy, s);
-      line(cx, cy - h, cx, cy + h);
-      break;
-    case 'T':
-      line(cx - h, cy - h, cx + h, cy - h);
-      line(cx, cy - h, cx, cy + h);
-      break;
-    case 'Y':
-      line(cx, cy - h*0.6, cx, cy);
-      line(cx, cy, cx - h*0.6, cy + h*0.6);
-      line(cx, cy, cx + h*0.6, cy + h*0.6);
-      break;
-    case 'U':
-      line(cx - h, cy - 10, cx + h, cy - 10);
-      line(cx - h, cy + 10, cx + h, cy + 10);
-      break;
-    case 'I':
-      line(cx, cy - h, cx, cy + h);
-      break;
-    case 'O':
-      circle(cx, cy, s);
-      break;
-    case 'P':
-      circle(cx, cy, s*0.6);
-      break;
-    case 'A':
-      const triH = Math.sqrt(3)*(s*0.5);
-      const vx1 = cx, vy1 = cy - triH/3;
-      const vx2 = cx - s*0.5/2, vy2 = cy + triH*2/6;
-      const vx3 = cx + s*0.5/2, vy3 = cy + triH*2/6;
-      triangle(vx1,vy1,vx2,vy2,vx3,vy3);
-      break;
-    case 'S':
-      const rS = s*0.22;
-      const triR = s*0.42;
-      circle(cx, cy - triR*0.5, rS*2);
-      circle(cx - triR*0.433, cy + triR*0.25, rS*2);
-      circle(cx + triR*0.433, cy + triR*0.25, rS*2);
-      break;
-    case 'D':
-      const rD = s*0.28;
-      circle(cx, cy - rD*0.5, rD*2);
-      circle(cx, cy + rD*0.5, rD*2);
-      break;
-    case 'F':
-      line(cx - h, cy - 10, cx + h, cy - 10);
-      line(cx - h, cy + 10, cx + h, cy + 10);
-      break;
-    case 'G':
-      point(cx, cy);
-      break;
-    case 'H':
-      const aH = s*0.45;
-      line(cx - aH, cy - aH, cx + aH, cy + aH);
-      line(cx + aH, cy - aH, cx - aH, cy + aH);
-      line(cx - aH, cy, cx + aH, cy);
-      break;
-    case 'J':
-      const barW = s*0.6;
-      const barYtop = cy - h;
-      const barYbot = cy + h;
-      line(cx - barW/2, barYtop, cx + barW/2, barYtop);
-      line(cx, cy - h*0.6, cx, cy + h*0.6);
-      line(cx - barW/2, barYbot, cx + barW/2, barYbot);
-      break;
-    case 'K':
-      const aK = s*0.35;
-      line(cx - aK, cy, cx + aK, cy);
-      line(cx, cy - aK, cx, cy + aK);
-      break;
-    case 'L':
-      line(cx, cy - h, cx, cy + h);
-      line(cx - s*0.35, cy, cx + s*0.35, cy);
-      break;
-    case 'Z':
-      line(cx - h, cy - s*0.3, cx + h, cy - s*0.3);
-      point(cx, cy);
-      line(cx - h*0.6, cy + s*0.3, cx + h*0.6, cy + s*0.3);
-      break;
-    case 'X':
-      const aX = s*0.45;
-      const gap = s*0.12;
-      line(cx - aX, cy - aX, cx - gap, cy - gap);
-      line(cx + aX, cy - aX, cx + gap, cy - gap);
-      line(cx - aX, cy + aX, cx - gap, cy + gap);
-      line(cx + aX, cy + aX, cx + gap, cy + gap);
-      break;
-    case 'C':
-      bezier(cx - s*0.25, cy - s*0.25, cx - s*0.9, cy - s*0.5, cx + s*0.6, cy - s*0.6, cx + s*0.25, cy);
-      bezier(cx - s*0.25, cy + s*0.25, cx - s*0.9, cy + s*0.5, cx + s*0.6, cy + s*0.6, cx + s*0.25, cy);
-      break;
-    case 'V':
-      line(cx - s*0.45, cy - s*0.45, cx, cy + s*0.45);
-      line(cx, cy + s*0.45, cx + s*0.45, cy - s*0.45);
-      break;
-    case 'B':
-      const rB = s*0.22;
-      const offB = s*0.28;
-      circle(cx - offB, cy - offB, rB*2);
-      circle(cx + offB, cy - offB, rB*2);
-      circle(cx - offB, cy + offB, rB*2);
-      circle(cx + offB, cy + offB, rB*2);
-      break;
-    case 'N':
-      beginShape();
-      vertex(cx, cy + s*0.1);
-      bezierVertex(cx - s*0.45, cy - s*0.18, cx - s*0.8, cy + s*0.25, cx, cy + s*0.45);
-      bezierVertex(cx + s*0.8, cy + s*0.25, cx + s*0.45, cy - s*0.18, cx, cy + s*0.1);
-      endShape(CLOSE);
-      break;
-    case 'M':
-      const offM = s*0.35;
-      line(cx - offM, cy - s*0.45, cx - offM, cy + s*0.45);
-      point(cx, cy);
-      line(cx + offM, cy - s*0.45, cx + offM, cy + s*0.45);
-      break;
-  }
-  pop();
-}
+  // --- Close button ---
+  closeBtn.addEventListener('click', () => {
+    kakaoWindow.style.display = 'none';
+  });
 </script>
+
 </body>
 </html>
