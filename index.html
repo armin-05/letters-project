@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gf simluator</title>
+<title>KakaoTalk Movable Window</title>
 <style>
   body {
     margin: 0;
@@ -26,49 +26,43 @@
     position: absolute;
     top: 200px;
     left: 200px;
-    width: 400px;
-    height: 600px;
     border-radius: 8px;
     overflow: hidden;
     display: none;
     cursor: default;
   }
 
-  /* Top drag bar (for moving) */
+  /* Top drag bar (for moving only from the top) */
   #kakaoTopBar {
     position: absolute;
     top: 0;
     left: 0;
     height: 40px;
     width: 100%;
-    background: rgba(0, 0, 0, 0);
+    background: transparent;
     cursor: grab;
+    z-index: 10;
   }
 
-  /* Close (X) button */
+  /* KakaoTalk window image (no stretching) */
+  #kakaoImage {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Invisible close button (click area over the image X) */
   #closeBtn {
     position: absolute;
-    right: 8px;
-    top: 8px;
-    width: 20px;
-    height: 20px;
-    color: white;
-    font-weight: bold;
-    font-family: Arial, sans-serif;
+    top: 10px;
+    right: 10px;
+    width: 30px;
+    height: 30px;
+    background: transparent;
     cursor: pointer;
-    text-align: center;
-    line-height: 20px;
-    border-radius: 4px;
-  }
-
-  #closeBtn:hover {
-    background: rgba(255, 255, 255, 0.3);
-  }
-
-  #kakaoImage {
-    width: 100%;
-    height: 100%;
-    display: block;
+    border: none;
+    outline: none;
+    z-index: 20;
   }
 </style>
 </head>
@@ -78,7 +72,7 @@
 
 <div id="kakaoWindow">
   <div id="kakaoTopBar"></div>
-  <div id="closeBtn">X</div>
+  <button id="closeBtn"></button>
   <img id="kakaoImage" src="Screenshot 2025-10-15 144717.png" alt="Kakao Window">
 </div>
 
@@ -103,12 +97,14 @@
     }
   });
 
-  // --- Show/Hide window when icon clicked ---
+  // --- Show window when icon clicked (only if hidden) ---
   icon.addEventListener('click', () => {
-    kakaoWindow.style.display = kakaoWindow.style.display === 'none' ? 'block' : 'none';
+    if (kakaoWindow.style.display === 'none') {
+      kakaoWindow.style.display = 'block';
+    }
   });
 
-  // --- Move the Kakao window from the top bar ---
+  // --- Move the Kakao window only from the top bar ---
   let draggingWindow = false, winOffsetX = 0, winOffsetY = 0;
   kakaoTopBar.addEventListener('mousedown', e => {
     draggingWindow = true;
@@ -124,7 +120,7 @@
     }
   });
 
-  // --- Close button ---
+  // --- Close the Kakao window when invisible X area clicked ---
   closeBtn.addEventListener('click', () => {
     kakaoWindow.style.display = 'none';
   });
