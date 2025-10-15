@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>KakaoTalk Movable Chat</title>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0"></script> <!-- 🔥 Fuse.js import -->
 <style>
   body {
     margin: 0;
@@ -72,7 +73,7 @@
     position: absolute;
     left: 10px;
     bottom: 65px;
-    width: calc(100% - 90px); /* Leave room for Send button */
+    width: calc(100% - 90px);
     height: 70px;
     font-family: Arial, sans-serif;
     font-size: 15px;
@@ -84,7 +85,7 @@
     z-index: 15;
   }
 
-  /* Send button (starts gray, becomes yellow when text present) */
+  /* Send button */
   #sendButton {
     position: absolute;
     right: 15px;
@@ -108,7 +109,7 @@
     cursor: pointer;
   }
 
-  /* Message area on blue background */
+  /* Message area */
   #messageContainer {
     position: absolute;
     top: 115px;
@@ -119,10 +120,9 @@
     z-index: 5;
   }
 
-  /* Chat bubble style */
+  /* Chat bubbles */
   .message {
     display: inline-block;
-    background-color: #ffeb00;
     padding: 8px 12px;
     border-radius: 12px;
     margin: 4px 0;
@@ -130,14 +130,31 @@
     word-wrap: break-word;
     font-family: Arial, sans-serif;
     font-size: 14px;
-    color: black;
-    align-self: flex-end;
   }
 
   .messageContainer {
     display: flex;
+    margin-bottom: 4px;
+  }
+
+  .userMsg {
     justify-content: flex-end;
   }
+
+  .userMsg .message {
+    background-color: #ffeb00;
+    color: black;
+  }
+
+  .botMsg {
+    justify-content: flex-start;
+  }
+
+  .botMsg .message {
+    background-color: #ececec;
+    color: black;
+  }
+
 </style>
 </head>
 <body>
@@ -154,6 +171,7 @@
 </div>
 
 <script>
+  // --- DOM ELEMENTS ---
   const icon = document.getElementById('icon');
   const kakaoWindow = document.getElementById('kakaoWindow');
   const kakaoTopBar = document.getElementById('kakaoTopBar');
@@ -163,9 +181,9 @@
   const messageContainer = document.getElementById('messageContainer');
 
   let savedText = "";
-  let messages = []; // store messages so they persist on reopen
+  let messages = []; // store messages to persist on reopen
 
-  // --- Move the icon freely ---
+  // --- ICON MOVE ---
   let draggingIcon = false, offsetX = 0, offsetY = 0;
   icon.addEventListener('mousedown', e => {
     draggingIcon = true;
@@ -180,17 +198,17 @@
     }
   });
 
-  // --- Show the window only if hidden ---
+  // --- WINDOW SHOW/HIDE ---
   icon.addEventListener('click', () => {
     const isHidden = window.getComputedStyle(kakaoWindow).display === 'none';
     if (isHidden) {
       kakaoWindow.style.display = 'block';
-      typingArea.value = savedText; // restore draft text
-      renderMessages(); // restore previous messages
+      typingArea.value = savedText;
+      renderMessages();
     }
   });
 
-  // --- Move the Kakao window from the top bar only ---
+  // --- WINDOW DRAG ---
   let draggingWindow = false, winOffsetX = 0, winOffsetY = 0;
   kakaoTopBar.addEventListener('mousedown', e => {
     draggingWindow = true;
@@ -206,14 +224,14 @@
     }
   });
 
-  // --- Invisible X close button ---
+  // --- CLOSE WINDOW ---
   closeBtn.addEventListener('click', () => {
     kakaoWindow.style.display = 'none';
     savedText = typingArea.value;
     typingArea.value = "";
   });
 
-  // --- Enable send button only if text present ---
+  // --- SEND BUTTON ENABLE ---
   typingArea.addEventListener('input', () => {
     if (typingArea.value.trim().length > 0) {
       sendButton.classList.add('active');
@@ -224,41 +242,94 @@
     }
   });
 
-  // --- Handle sending messages ---
+  // --- SEND MESSAGE ---
   sendButton.addEventListener('click', () => {
     const text = typingArea.value.trim();
     if (text.length === 0) return;
-    messages.push(text);
-    renderMessages();
+    messages.push({from: "user", text});
     typingArea.value = "";
     sendButton.classList.remove('active');
     sendButton.disabled = true;
+    renderMessages();
+
+    // === AI RESPONSE SYSTEM START ===
+    const reply = getBotReply(text);
+    setTimeout(() => {
+      messages.push({from: "bot", text: reply});
+      renderMessages();
+    }, 500);
+    // === AI RESPONSE SYSTEM END ===
   });
 
-  // --- Display messages on screen ---
+  // --- RENDER MESSAGES ---
   function renderMessages() {
     messageContainer.innerHTML = "";
     messages.forEach(msg => {
       const msgDiv = document.createElement('div');
       msgDiv.classList.add('messageContainer');
+      msgDiv.classList.add(msg.from === "user" ? 'userMsg' : 'botMsg');
       const bubble = document.createElement('div');
       bubble.classList.add('message');
-      bubble.textContent = msg;
+      bubble.textContent = msg.text;
       msgDiv.appendChild(bubble);
       messageContainer.appendChild(msgDiv);
     });
     messageContainer.scrollTop = messageContainer.scrollHeight;
   }
 
-  // --- Focus typing area when clicking white area ---
+  // --- FOCUS TYPING AREA ---
   kakaoWindow.addEventListener('click', e => {
     const rect = kakaoWindow.getBoundingClientRect();
     const clickY = e.clientY - rect.top;
     const clickFromBottom = rect.height - clickY;
-    if (clickFromBottom < 110) {
-      typingArea.focus();
-    }
+    if (clickFromBottom < 110) typingArea.focus();
   });
+
+  // =======================================================
+  // === AI RESPONSE SYSTEM START ===
+  // =======================================================
+
+  const botResponses = [
+    { pattern: "hello", reply: "Heyyyyy" },
+    { pattern: "hi", reply: "hiiiiiii! " },
+    { pattern: "how are you", reply: "I'm good, how about you?" },
+    { pattern: "bye", reply: "See you later 👋" },
+    { pattern: "thanks", reply: "You're welcome 😊" },
+    { pattern: "weather", reply: "It looks sunny today ☀️" },
+    { pattern: "good", reply: "Glad to hear that 😄" },
+    { pattern: "sad", reply: "Oh no 😢 Cheer up!" },
+    { pattern: "angry", reply: "Whoa, take it easy 😅" },
+  ];
+
+  const fuse = new Fuse(botResponses, {
+    keys: ["pattern"],
+    threshold: 0.4, // sensitivity (0 = exact, 1 = very fuzzy)
+    includeScore: true
+  });
+
+  function getBotReply(text) {
+    const result = fuse.search(text.toLowerCase());
+    if (result.length > 0 && result[0].score < 0.4) {
+      return result[0].item.reply;
+    }
+
+    return randomReply([
+      "sorry, i just woke up. im sooo tired today",
+      "i fell asleep again. wyd?",
+      "Really? im soooo hungry tho",
+      "do you still love me?",
+      "sorry, fell asleep",
+    ]);
+  }
+
+  function randomReply(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  // =======================================================
+  // === AI RESPONSE SYSTEM END ===
+  // =======================================================
+
 </script>
 
 </body>
