@@ -67,11 +67,11 @@
     z-index: 20;
   }
 
-  /* Typing area overlay */
+  /* Typing area overlay (moved up 50px) */
   #typingArea {
     position: absolute;
     left: 10px;
-    bottom: 18px; /* Adjust based on where the white area starts */
+    bottom: 68px; /* ← was 18px before; moved up 50px */
     width: calc(100% - 20px);
     height: 30px;
     font-family: Arial, sans-serif;
@@ -103,7 +103,6 @@
   const closeBtn = document.getElementById('closeBtn');
   const typingArea = document.getElementById('typingArea');
 
-  // Save typed text between sessions in memory
   let savedText = "";
 
   // --- Move the icon freely ---
@@ -158,8 +157,8 @@
     const rect = kakaoWindow.getBoundingClientRect();
     const clickY = e.clientY - rect.top;
     const clickFromBottom = rect.height - clickY;
-    // approximate white area near bottom (60px zone)
-    if (clickFromBottom < 60) {
+    // approximate white area near bottom (now 110px since we moved text up)
+    if (clickFromBottom < 110) {
       typingArea.focus();
     }
   });
