@@ -10,105 +10,105 @@
     --bg-black:#000;
     --note-bg:#d3d3d3;
     --note-top:#8c8c8c;
-    --green-exact:#1e7f34;   /* dark green */
-    --green-case:#9cff8a;    /* light green */
+    --green-exact:#1e7f34;
+    --green-case:#9cff8a;
     --yellow-wrong:#ffeb66;
   }
-  html,body{height:100%;margin:0;background:var(--bg-black);overflow:hidden;font-family:Arial,Helvetica,sans-serif;}
+  *{box-sizing:border-box;}
+  html,body{height:100%;margin:0;background:var(--bg-black);overflow:hidden;font-family:Arial,sans-serif;}
 
-  /* --- KakaoTalk --- */
-  #icon{
-    position:absolute; top:100px; left:100px; width:70px; height:80px; cursor:grab;
-  }
-  #kakaoWindow{
-    position:absolute; top:200px; left:200px; border-radius:8px; overflow:hidden; display:none; cursor:default;
-    /* no resize, no resize handle for kakao */
-  }
-  #kakaoTopBar{
-    position:absolute; top:0; left:0; height:40px; width:100%; background:transparent; cursor:grab; z-index:10;
-  }
-  #kakaoImage{ display:block; height:auto; width:auto; max-width:100%; max-height:100%; }
-  #closeBtn{ position:absolute; top:8px; right:8px; width:32px; height:32px; background:transparent; cursor:pointer; border:none; outline:none; z-index:20; }
-  #typingArea{
-    position:absolute; left:10px; bottom:65px; width:calc(100% - 90px); height:70px;
-    font-family:Arial,sans-serif; font-size:15px; color:black; background:transparent; border:none; outline:none; resize:none; z-index:15;
-  }
-  #sendButton{
-    position:absolute; right:15px; bottom:16px; width:60px; height:30px; font-weight:bold; color:black;
-    background-color:#c0c0c0; border:none; border-radius:4px; cursor:not-allowed; z-index:16; transition: background-color .2s;
-  }
-  #sendButton.active{ background-color:#ffeb00; cursor:pointer; }
-  #messageContainer{
-    position:absolute; top:115px; left:10px; right:10px; bottom:147px; overflow-y:auto; z-index:5;
-  }
-  .message{ display:inline-block; padding:8px 12px; border-radius:12px; margin:4px 0; max-width:70%; word-wrap:break-word; font-size:14px; font-family:Arial,sans-serif; }
-  .messageContainer{ display:flex; margin-bottom:4px; }
-  .userMsg{ justify-content:flex-end; } .userMsg .message{ background-color:#ffeb00; color:black; }
-  .botMsg{ justify-content:flex-start; } .botMsg .message{ background-color:#ececec; color:black; }
+  /* Icons */
+  .desktop-icon{position:absolute;width:70px;height:80px;cursor:grab;user-select:none;}
+  .desktop-icon:active{cursor:grabbing;}
+  #icon{top:100px;left:100px;}
+  #noteIcon{top:100px;left:200px;}
 
-  /* --- NOTE icon + window --- */
-  #noteIcon {
-    position:absolute; top:100px; left:200px; width:70px; height:80px; cursor:grab;
-    background:transparent; /* use your png */
-  }
+  /* Window base styles */
+  .window{position:absolute;border-radius:8px;overflow:hidden;display:none;box-shadow:0 6px 18px rgba(0,0,0,0.5);}
+  .window-topbar{position:absolute;top:0;left:0;height:40px;width:100%;cursor:grab;z-index:10;}
+  .window-topbar:active{cursor:grabbing;}
+  .close-btn{position:absolute;top:8px;right:8px;width:22px;height:22px;background:#d94c4c;border-radius:50%;border:none;cursor:pointer;z-index:20;}
 
-  #noteWindow{
-    position:absolute; top:220px; left:420px; width:520px; height:420px; background:var(--note-bg);
-    border-radius:8px; display:none; box-shadow:0 6px 18px rgba(0,0,0,0.5); overflow:hidden;
-    min-width:260px; min-height:180px;
-  }
-  #noteTopBar{ position:absolute; top:0; left:0; height:36px; width:100%; background:var(--note-top); cursor:grab; z-index:10; }
-  #noteCloseBtn{ position:absolute; top:6px; right:8px; width:22px; height:22px; background:#d94c4c; border-radius:50%; border:none; cursor:pointer; z-index:12; }
-  #noteContent{
-    position:absolute; top:44px; left:10px; right:10px; bottom:10px;
-    padding:6px; box-sizing:border-box; font-family:monospace; font-size:16px; line-height:1.3;
-    outline:none; background:transparent; white-space:pre-wrap; word-wrap:break-word; overflow:auto;
-  }
+  /* KakaoTalk Window */
+  #kakaoWindow{top:200px;left:200px;}
+  #kakaoTopBar{background:transparent;height:40px;}
+  #kakaoImage{display:block;max-width:100%;max-height:100%;}
+  #typingArea{position:absolute;left:10px;bottom:65px;width:calc(100% - 90px);height:70px;font-size:15px;color:black;background:transparent;border:none;outline:none;resize:none;z-index:15;}
+  #sendButton{position:absolute;right:15px;bottom:16px;width:60px;height:30px;font-weight:bold;color:black;background-color:#c0c0c0;border:none;border-radius:4px;cursor:not-allowed;z-index:16;transition:background-color .2s;}
+  #sendButton.active{background-color:#ffeb00;cursor:pointer;}
+  #messageContainer{position:absolute;top:115px;left:10px;right:10px;bottom:147px;overflow-y:auto;z-index:5;}
+  .message{display:inline-block;padding:8px 12px;border-radius:12px;margin:4px 0;max-width:70%;word-wrap:break-word;font-size:14px;}
+  .messageContainer{display:flex;margin-bottom:4px;}
+  .userMsg{justify-content:flex-end;}
+  .userMsg .message{background-color:#ffeb00;color:black;}
+  .botMsg{justify-content:flex-start;}
+  .botMsg .message{background-color:#ececec;color:black;}
 
-  /* visible circular resize handle only for note window */
-  #noteWindow .resize-handle{
-    position:absolute; right:8px; bottom:8px; width:14px; height:14px;
-    background: radial-gradient(circle, #777 30%, transparent 31%); border-radius:50%; cursor:nwse-resize; z-index:60;
-  }
+  /* Note Window */
+  #noteWindow{top:220px;left:420px;width:520px;height:420px;background:var(--note-bg);min-width:260px;min-height:180px;display:block;}
+  #noteTopBar{background:var(--note-top);height:36px;}
+  #noteCloseBtn{top:6px;}
+  #noteContent{position:absolute;top:44px;left:10px;right:10px;bottom:10px;padding:6px;font-family:monospace;font-size:16px;line-height:1.3;outline:none;background:transparent;white-space:pre-wrap;word-wrap:break-word;overflow:auto;}
+  .resize-handle{position:absolute;right:8px;bottom:8px;width:14px;height:14px;background:radial-gradient(circle, #777 30%, transparent 31%);border-radius:50%;cursor:nwse-resize;z-index:60;}
 
-  /* highlight classes */
-  .match-exact{ background:var(--green-exact); color:#fff; transition: background-color .3s; }
-  .match-case{ background:var(--green-case); color:#000; transition: background-color .3s; }
-  .match-wrong{ background:var(--yellow-wrong); color:#000; }
+  /* Highlight classes */
+  .match-exact{background:var(--green-exact);color:#fff;transition:background-color .3s;}
+  .match-case{background:var(--green-case);color:#000;transition:background-color .3s;}
+  .match-wrong{background:var(--yellow-wrong);color:#000;}
 </style>
 </head>
 <body>
 
-<!-- KAKAO (exact original) -->
-<img id="icon" src="Screenshot 2025-10-15 144240.png" alt="Kakao Icon">
+<!-- Icons -->
+<img id="icon" class="desktop-icon" src="Screenshot 2025-10-15 144240.png" alt="Kakao Icon">
+<img id="noteIcon" class="desktop-icon" src="notepad.png" alt="Note Icon">
 
-<div id="kakaoWindow">
-  <div id="kakaoTopBar"></div>
-  <button id="closeBtn" title="close"></button>
+<!-- KakaoTalk Window -->
+<div id="kakaoWindow" class="window">
+  <div id="kakaoTopBar" class="window-topbar"></div>
+  <button id="closeBtn" class="close-btn" title="close"></button>
   <img id="kakaoImage" src="Screenshot 2025-10-15 144717.png" alt="Kakao Window">
   <div id="messageContainer"></div>
   <textarea id="typingArea" placeholder="" spellcheck="false"></textarea>
   <button id="sendButton">Send</button>
 </div>
 
-<!-- NOTE (file) -->
-<img id="noteIcon" src="notepad.png" alt="Note Icon">
-<div id="noteWindow">
-  <div id="noteTopBar"></div>
-  <button id="noteCloseBtn" title="close"></button>
+<!-- Note Window -->
+<div id="noteWindow" class="window">
+  <div id="noteTopBar" class="window-topbar"></div>
+  <button id="noteCloseBtn" class="close-btn" title="close"></button>
   <div id="noteContent" contenteditable="true" aria-label="Note editor"></div>
   <div class="resize-handle" title="resize"></div>
 </div>
 
 <script>
-/* ---------- z-index management (bring clicked/opened window to front) ---------- */
+/* Z-index management */
 let zIndexCounter = 100;
-function bringToFront(elem){
-  zIndexCounter++;
-  elem.style.zIndex = zIndexCounter;
+const bringToFront = (elem) => { elem.style.zIndex = ++zIndexCounter; };
+
+/* Drag functionality for icons and windows */
+function makeDraggable(elem, handle = elem) {
+  let dragging = false, offsetX = 0, offsetY = 0;
+  
+  handle.addEventListener('mousedown', (e) => {
+    if (e.target !== handle && handle === elem) return;
+    dragging = true;
+    const rect = elem.getBoundingClientRect();
+    offsetX = e.clientX - rect.left;
+    offsetY = e.clientY - rect.top;
+    if (elem.classList.contains('window')) bringToFront(elem);
+  });
+  
+  document.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    elem.style.left = (e.clientX - offsetX) + 'px';
+    elem.style.top = (e.clientY - offsetY) + 'px';
+  });
+  
+  document.addEventListener('mouseup', () => dragging = false);
 }
 
-/* ========== KAKAO (unchanged functionality, non-resizable) ========== */
+/* ========== KAKAO ========== */
 const icon = document.getElementById('icon');
 const kakaoWindow = document.getElementById('kakaoWindow');
 const kakaoTopBar = document.getElementById('kakaoTopBar');
@@ -120,20 +120,11 @@ const messageContainer = document.getElementById('messageContainer');
 let savedText = "";
 let messages = [];
 
-// Icon drag (kakao icon)
-let draggingIcon = false, iconOffX = 0, iconOffY = 0;
-icon.addEventListener('mousedown', e => { draggingIcon = true; iconOffX = e.offsetX; iconOffY = e.offsetY; icon.style.cursor='grabbing'; });
-document.addEventListener('mouseup', ()=> { draggingIcon = false; icon.style.cursor='grab'; });
-document.addEventListener('mousemove', e => {
-  if(!draggingIcon) return;
-  icon.style.left = (e.pageX - iconOffX) + 'px';
-  icon.style.top  = (e.pageY - iconOffY) + 'px';
-});
+makeDraggable(icon);
+makeDraggable(kakaoWindow, kakaoTopBar);
 
-// Open Kakao
-icon.addEventListener('click', ()=>{
-  const isHidden = window.getComputedStyle(kakaoWindow).display === 'none';
-  if(isHidden){
+icon.addEventListener('click', () => {
+  if (kakaoWindow.style.display === 'none') {
     kakaoWindow.style.display = 'block';
     bringToFront(kakaoWindow);
     typingArea.value = savedText;
@@ -141,90 +132,70 @@ icon.addEventListener('click', ()=>{
   }
 });
 
-// Drag kakao window by top bar (KEEP this)
-let draggingWindow = false, winOffsetX = 0, winOffsetY = 0;
-kakaoTopBar.addEventListener('mousedown', e=>{
-  draggingWindow = true;
-  bringToFront(kakaoWindow);
-  const rect = kakaoWindow.getBoundingClientRect();
-  winOffsetX = e.clientX - rect.left;
-  winOffsetY = e.clientY - rect.top;
-  kakaoTopBar.style.cursor = 'grabbing';
-});
-document.addEventListener('mouseup', ()=>{ draggingWindow = false; kakaoTopBar.style.cursor='grab'; });
-document.addEventListener('mousemove', e=>{
-  if(!draggingWindow) return;
-  kakaoWindow.style.left = (e.clientX - winOffsetX) + 'px';
-  kakaoWindow.style.top  = (e.clientY - winOffsetY) + 'px';
-});
-
-// Close kakao
-closeBtn.addEventListener('click', ()=>{
+closeBtn.addEventListener('click', () => {
   kakaoWindow.style.display = 'none';
   savedText = typingArea.value;
   typingArea.value = "";
 });
 
-// Send enable
-typingArea.addEventListener('input', ()=>{
-  if(typingArea.value.trim().length > 0){ sendButton.classList.add('active'); sendButton.disabled = false; }
-  else { sendButton.classList.remove('active'); sendButton.disabled = true; }
+typingArea.addEventListener('input', () => {
+  const hasText = typingArea.value.trim().length > 0;
+  sendButton.classList.toggle('active', hasText);
+  sendButton.disabled = !hasText;
 });
 
-// Send message
-sendButton.addEventListener('click', ()=>{
+sendButton.addEventListener('click', () => {
   const text = typingArea.value.trim();
-  if(!text) return;
-  messages.push({from:"user", text});
+  if (!text) return;
+  messages.push({from: "user", text});
   typingArea.value = "";
-  sendButton.classList.remove('active'); sendButton.disabled = true;
+  sendButton.classList.remove('active');
+  sendButton.disabled = true;
   renderMessages();
-  const reply = getBotReply(text);
-  setTimeout(()=>{ messages.push({from:"bot", text:reply}); renderMessages(); }, 500);
+  setTimeout(() => {
+    messages.push({from: "bot", text: getBotReply(text)});
+    renderMessages();
+  }, 500);
 });
 
-function renderMessages(){
-  messageContainer.innerHTML = "";
-  messages.forEach(msg=>{
-    const msgDiv = document.createElement('div');
-    msgDiv.classList.add('messageContainer');
-    msgDiv.classList.add(msg.from === "user" ? 'userMsg' : 'botMsg');
-    const bubble = document.createElement('div');
-    bubble.classList.add('message');
-    bubble.textContent = msg.text;
-    msgDiv.appendChild(bubble);
-    messageContainer.appendChild(msgDiv);
-  });
+function renderMessages() {
+  messageContainer.innerHTML = messages.map(msg => {
+    const msgClass = msg.from === "user" ? 'userMsg' : 'botMsg';
+    return `<div class="messageContainer ${msgClass}"><div class="message">${msg.text}</div></div>`;
+  }).join('');
   messageContainer.scrollTop = messageContainer.scrollHeight;
 }
 
-// focus typing area when clicking lower region (keep original)
-kakaoWindow.addEventListener('click', e=>{
+kakaoWindow.addEventListener('click', (e) => {
   const rect = kakaoWindow.getBoundingClientRect();
-  const clickY = e.clientY - rect.top;
-  const clickFromBottom = rect.height - clickY;
-  if(clickFromBottom < 110) {
+  if (rect.height - (e.clientY - rect.top) < 110) {
     typingArea.focus();
     bringToFront(kakaoWindow);
   }
 });
 
-/* Bot replies (kept same) */
+/* Bot replies */
 const botResponses = [
-  { pattern: "hello", reply: "Heyyyyy" },
-  { pattern: "hi", reply: "hiiiiiii! " },
-  { pattern: "how are you", reply: "I'm goooooood" },
-  { pattern: "bye", reply: " " },
-  { pattern: "thanks", reply: "You're welcomee" },
-  { pattern: "weather", reply: "I hope its sunny today " },
-  { pattern: "good", reply: "thats nice" },
-  { pattern: "sad", reply: "Oh nooo" },
-  { pattern: "angry", reply: "..." },
+  {pattern: "hello", reply: "Heyyyyy"},
+  {pattern: "hi", reply: "hiiiiiii! "},
+  {pattern: "how are you", reply: "I'm goooooood"},
+  {pattern: "bye", reply: " "},
+  {pattern: "thanks", reply: "You're welcomee"},
+  {pattern: "weather", reply: "I hope its sunny today "},
+  {pattern: "good", reply: "thats nice"},
+  {pattern: "sad", reply: "Oh nooo"},
+  {pattern: "angry", reply: "..."}
 ];
-const fuse = new Fuse(botResponses, { keys:["pattern"], threshold:0.4, includeScore:true });
-function getBotReply(text){ const r = fuse.search(text.toLowerCase()); if(r.length>0 && r[0].score<0.4) return r[0].item.reply; const arr=["sorry, i just woke up. im sooo tired today","i fell asleep again. wyd?","Really? im soooo hungry tho","do you still love me?","sorry, fell asleep"]; return arr[Math.floor(Math.random()*arr.length)]; }
+const fuse = new Fuse(botResponses, {keys: ["pattern"], threshold: 0.4});
+function getBotReply(text) {
+  const result = fuse.search(text.toLowerCase());
+  if (result.length > 0 && result[0].score < 0.4) return result[0].item.reply;
+  const fallbacks = ["sorry, i just woke up. im sooo tired today", "i fell asleep again. wyd?", 
+    "Really? im soooo hungry tho", "do you still love me?", "sorry, fell asleep"];
+  return fallbacks[Math.floor(Math.random() * fallbacks.length)];
+}
 
-/* ---------- NOTE (file) window: movable, resizable, highlights, caret at end ---------- */
+/* ========== NOTE WINDOW ========== */
 const noteIcon = document.getElementById('noteIcon');
 const noteWindow = document.getElementById('noteWindow');
 const noteTopBar = document.getElementById('noteTopBar');
@@ -232,108 +203,87 @@ const noteCloseBtn = document.getElementById('noteCloseBtn');
 const noteContent = document.getElementById('noteContent');
 const noteResize = noteWindow.querySelector('.resize-handle');
 
-const targetText = `Chapter 151: Demonic nature “What?” Gu Yue Yao Le was shocked when she heard this. Fang Yuan had already struck at lightning speed, his hand chopping her neck! She fainted immediately. The young girl fell down helplessly, and Fang Yuan’s hand quickly moved, holding her by the waist. Next, he activated the Stealth Scale Gu, and their bodies vanished on the spot. When Gu Yue Yao Le woke up in a sleepy state, she found herself in a dark mountain cave. She shrugged her head, trying to stand up subconsciously. But she soon found out that her arms were tied behind her back, the rope looped around her neck; she was tied tightly on a large rock. All the Gu worms on her body had been plundered away by Fang Yuan, refined and turned into his. She was merely a fifteen-year-old young girl — with that frail body, how could she break free from that thick ropes wrapped a few times around the rock, even tied with knots? Being trapped in this remote and unfamiliar place, the young girl started to feel frightened. She thought about the moment before she had fainted; even the most naive person would also know that Fang Yuan was going to do something bad to her.`;
+const targetText = `Chapter 151: Demonic nature "What?" Gu Yue Yao Le was shocked when she heard this. Fang Yuan had already struck at lightning speed, his hand chopping her neck! She fainted immediately. The young girl fell down helplessly, and Fang Yuan's hand quickly moved, holding her by the waist. Next, he activated the Stealth Scale Gu, and their bodies vanished on the spot. When Gu Yue Yao Le woke up in a sleepy state, she found herself in a dark mountain cave. She shrugged her head, trying to stand up subconsciously. But she soon found out that her arms were tied behind her back, the rope looped around her neck; she was tied tightly on a large rock. All the Gu worms on her body had been plundered away by Fang Yuan, refined and turned into his. She was merely a fifteen-year-old young girl — with that frail body, how could she break free from that thick ropes wrapped a few times around the rock, even tied with knots? Being trapped in this remote and unfamiliar place, the young girl started to feel frightened. She thought about the moment before she had fainted; even the most naive person would also know that Fang Yuan was going to do something bad to her.`;
 
-/* make note icon draggable (like kakao icon) */
-let draggingNoteIcon = false, noteIconOffX = 0, noteIconOffY = 0;
-noteIcon.addEventListener('mousedown', e=>{ draggingNoteIcon=true; noteIconOffX=e.offsetX; noteIconOffY=e.offsetY; noteIcon.style.cursor='grabbing'; });
-document.addEventListener('mouseup', ()=>{ draggingNoteIcon=false; noteIcon.style.cursor='grab'; });
-document.addEventListener('mousemove', e=>{ if(!draggingNoteIcon) return; noteIcon.style.left=(e.pageX-noteIconOffX)+'px'; noteIcon.style.top=(e.pageY-noteIconOffY)+'px'; });
+makeDraggable(noteIcon);
+makeDraggable(noteWindow, noteTopBar);
 
-/* open note window on icon click */
-noteIcon.addEventListener('click', ()=>{ noteWindow.style.display='block'; bringToFront(noteWindow); placeCaretAtEnd(noteContent); });
-
-/* note top bar drag -> move window */
-let draggingNoteWindow=false, noteOffX=0, noteOffY=0;
-noteTopBar.addEventListener('mousedown', e=>{
-  draggingNoteWindow=true;
-  const rect = noteWindow.getBoundingClientRect();
-  noteOffX = e.clientX - rect.left; noteOffY = e.clientY - rect.top;
+noteIcon.addEventListener('click', () => {
+  noteWindow.style.display = 'block';
   bringToFront(noteWindow);
-  noteTopBar.style.cursor='grabbing';
-});
-document.addEventListener('mouseup', ()=>{ draggingNoteWindow=false; noteTopBar.style.cursor='grab'; });
-document.addEventListener('mousemove', e=>{
-  if(!draggingNoteWindow) return;
-  noteWindow.style.left = (e.clientX - noteOffX) + 'px';
-  noteWindow.style.top  = (e.clientY - noteOffY) + 'px';
+  placeCaretAtEnd(noteContent);
 });
 
-/* visible resize handle behavior (only for noteWindow) */
-noteResize.addEventListener('mousedown', e=>{
+noteCloseBtn.addEventListener('click', () => noteWindow.style.display = 'none');
+
+/* Resize handle */
+noteResize.addEventListener('mousedown', (e) => {
   e.preventDefault();
   bringToFront(noteWindow);
   const startRect = noteWindow.getBoundingClientRect();
   const startX = e.clientX, startY = e.clientY;
-  function onMove(ev){
-    const dx = ev.clientX - startX, dy = ev.clientY - startY;
-    const newW = Math.max(260, startRect.width + dx);
-    const newH = Math.max(180, startRect.height + dy);
+  
+  const onMove = (ev) => {
+    const newW = Math.max(260, startRect.width + (ev.clientX - startX));
+    const newH = Math.max(180, startRect.height + (ev.clientY - startY));
     noteWindow.style.width = newW + 'px';
     noteWindow.style.height = newH + 'px';
-  }
-  function onUp(){ document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); }
+  };
+  
+  const onUp = () => {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+  };
+  
   document.addEventListener('mousemove', onMove);
   document.addEventListener('mouseup', onUp);
 });
 
-/* note close */
-noteCloseBtn.addEventListener('click', ()=> noteWindow.style.display='none');
+/* Bring windows to front on mousedown */
+[kakaoWindow, noteWindow].forEach(w => w.addEventListener('mousedown', () => bringToFront(w)));
 
-/* clicking windows brings them front (so their internals stay top too) */
-[kakaoWindow, noteWindow].forEach(w=>{
-  w.addEventListener('mousedown', ()=> bringToFront(w));
-});
+/* Highlight logic */
+const greenTimers = new Map();
 
-/* highlight logic:
-   - dark green for exact char (correct char and case)
-   - light green if same letter different case
-   - yellow for wrong
-   - both greens fade to transparent after 5s
-   - caret placed at end after update
-*/
-let greenTimers = new WeakMap();
-
-function renderNoteHighlights(rawText){
-  // clear previous timers
-  // build spans char-by-char
+function renderNoteHighlights(rawText) {
+  greenTimers.forEach(t => clearTimeout(t));
+  greenTimers.clear();
+  
   noteContent.innerHTML = '';
-  for(let i=0;i<rawText.length;i++){
+  const fragment = document.createDocumentFragment();
+  
+  for (let i = 0; i < rawText.length; i++) {
     const ch = rawText[i];
-    const expected = targetText[i] ?? null;
+    const expected = targetText[i];
     const span = document.createElement('span');
     span.textContent = ch;
-    if(expected === null){
+    
+    if (expected === undefined) {
       span.className = 'match-wrong';
-    } else if(ch === expected){
+    } else if (ch === expected) {
       span.className = 'match-exact';
       scheduleGreenFade(span);
-    } else if(ch.toLowerCase() === expected.toLowerCase()){
+    } else if (ch.toLowerCase() === expected.toLowerCase()) {
       span.className = 'match-case';
       scheduleGreenFade(span);
     } else {
       span.className = 'match-wrong';
     }
-    noteContent.appendChild(span);
+    fragment.appendChild(span);
   }
+  noteContent.appendChild(fragment);
 }
 
-function scheduleGreenFade(span){
-  // clear old timer if any
-  if(greenTimers.has(span) && greenTimers.get(span)) {
-    clearTimeout(greenTimers.get(span));
-  }
-  // after 5s, remove highlight classes (fade to plain)
-  const t = setTimeout(()=>{
-    span.classList.remove('match-exact','match-case');
+function scheduleGreenFade(span) {
+  const timer = setTimeout(() => {
+    span.classList.remove('match-exact', 'match-case');
     span.style.background = 'transparent';
     greenTimers.delete(span);
   }, 5000);
-  greenTimers.set(span, t);
+  greenTimers.set(span, timer);
 }
 
-/* ensure caret at end */
-function placeCaretAtEnd(el){
+function placeCaretAtEnd(el) {
   el.focus();
   const range = document.createRange();
   range.selectNodeContents(el);
@@ -343,30 +293,26 @@ function placeCaretAtEnd(el){
   sel.addRange(range);
 }
 
-/* keep plain-text typing behavior while using contenteditable:
-   We capture 'input' and rebuild spans, then move caret to end.
-*/
-noteContent.addEventListener('input', (e)=>{
-  // get plain text (preserve newlines)
-  const text = noteContent.innerText.replace(/\uFEFF/g,''); // remove zero-width if any
+noteContent.addEventListener('input', () => {
+  const text = noteContent.innerText.replace(/\uFEFF/g, '');
   renderNoteHighlights(text);
   placeCaretAtEnd(noteContent);
 });
 
-/* keep Enter/Tab behavior nicer */
-noteContent.addEventListener('keydown', (e)=>{
-  if(e.key === 'Tab'){
+noteContent.addEventListener('keydown', (e) => {
+  if (e.key === 'Tab') {
     e.preventDefault();
-    // insert tab at caret (we always place caret at end anyway, so append)
-    const selText = noteContent.innerText + '\t';
-    renderNoteHighlights(selText);
+    const text = noteContent.innerText + '\t';
+    renderNoteHighlights(text);
     placeCaretAtEnd(noteContent);
   }
 });
 
-/* Initialize empty */
-renderNoteHighlights('');
+/* Initialize with first 50 characters */
+const initialText = targetText.substring(0, 50);
+renderNoteHighlights(initialText);
 placeCaretAtEnd(noteContent);
+bringToFront(noteWindow);
 </script>
 </body>
 </html>
