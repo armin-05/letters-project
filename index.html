@@ -3,336 +3,443 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KakaoTalk + Notepad Desktop</title>
-
+<title>KakaoTalk + Note App</title>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0"></script>
 <style>
-  :root {
-    --bg-black:#000;
-    --note-bg:#e6e6e6;
-    --note-top:#9a9a9a;
-    --dark-green:#1e7f34;
-    --light-green:#9cff8a;
-    --wrong-yellow:#fff666;
-    --fade-time:5s;
+  body {
+    margin: 0;
+    background-color: black;
+    overflow: hidden;
   }
 
-  html, body {
-    margin:0; padding:0; height:100%;
-    background:var(--bg-black);
-    font-family:Arial, Helvetica, sans-serif;
-    overflow:hidden;
-  }
-
-  /* --- Kakao icon --- */
+  /* === KakaoTalk ICON + WINDOW (UNCHANGED) === */
   #icon {
-    position:absolute;
-    top:60px; left:60px;
-    width:70px; height:80px;
-    cursor:grab;
+    position: absolute;
+    top: 100px;
+    left: 100px;
+    width: 70px;
+    height: 80px;
+    cursor: grab;
   }
 
-  /* --- Note icon --- */
-  #noteIcon {
-    position:absolute;
-    top:60px; left:160px;
-    width:70px; height:80px;
-    cursor:grab;
-  }
-
-  /* --- Kakao Window --- */
   #kakaoWindow {
-    position:absolute;
-    top:160px; left:160px;
-    width:420px; height:340px;
-    display:none;
-    border-radius:8px;
-    overflow:hidden;
-    background:transparent;
+    position: absolute;
+    top: 200px;
+    left: 200px;
+    border-radius: 8px;
+    overflow: hidden;
+    display: none;
+    cursor: default;
   }
 
   #kakaoTopBar {
-    height:40px;
-    width:100%;
-    background:transparent;
-    cursor:grab;
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 40px;
+    width: 100%;
+    background: transparent;
+    cursor: grab;
+    z-index: 10;
   }
 
   #kakaoImage {
-    display:block;
-    width:100%;
-    height:auto;
+    display: block;
+    height: auto;
+    width: auto;
+    max-width: 100%;
+    max-height: 100%;
   }
 
-  #messageContainer {
-    position:absolute;
-    top:115px; left:10px; right:10px; bottom:147px;
-    overflow:auto;
+  #closeBtn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    cursor: pointer;
+    border: none;
+    outline: none;
+    z-index: 20;
   }
-
-  .messageContainer { display:flex; margin-bottom:4px; }
-  .message {
-    display:inline-block;
-    padding:8px 12px;
-    border-radius:12px;
-    margin:4px 0;
-    max-width:70%;
-    word-wrap:break-word;
-    font-size:14px;
-  }
-  .userMsg { justify-content:flex-end; }
-  .userMsg .message { background:#ffeb00; }
-  .botMsg { justify-content:flex-start; }
-  .botMsg .message { background:#ececec; }
 
   #typingArea {
-    position:absolute;
-    left:10px; bottom:65px;
-    width:calc(100% - 90px);
-    height:70px;
-    font-size:15px;
-    background:transparent;
-    border:none;
-    outline:none;
-    resize:none;
-    color:black;
-    z-index:15;
+    position: absolute;
+    left: 10px;
+    bottom: 65px;
+    width: calc(100% - 90px);
+    height: 70px;
+    font-family: Arial, sans-serif;
+    font-size: 15px;
+    color: black;
+    background: transparent;
+    border: none;
+    outline: none;
+    resize: none;
+    z-index: 15;
   }
 
   #sendButton {
-    position:absolute;
-    right:15px; bottom:16px;
-    width:60px; height:30px;
-    font-weight:bold;
-    border:none; border-radius:4px;
-    background-color:#c0c0c0;
-    cursor:not-allowed;
+    position: absolute;
+    right: 15px;
+    bottom: 16px;
+    width: 60px;
+    height: 30px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    font-weight: bold;
+    color: black;
+    background-color: #c0c0c0;
+    border: none;
+    border-radius: 4px;
+    cursor: not-allowed;
+    z-index: 16;
+    transition: background-color 0.2s ease;
   }
-  #sendButton.active { background-color:#ffeb00; cursor:pointer; }
 
-  /* --- Note Window --- */
+  #sendButton.active {
+    background-color: #ffeb00;
+    cursor: pointer;
+  }
+
+  #messageContainer {
+    position: absolute;
+    top: 115px;
+    left: 10px;
+    right: 10px;
+    bottom: 147px;
+    overflow-y: auto;
+    z-index: 5;
+  }
+
+  .message {
+    display: inline-block;
+    padding: 8px 12px;
+    border-radius: 12px;
+    margin: 4px 0;
+    max-width: 70%;
+    word-wrap: break-word;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+  }
+
+  .messageContainer {
+    display: flex;
+    margin-bottom: 4px;
+  }
+
+  .userMsg {
+    justify-content: flex-end;
+  }
+
+  .userMsg .message {
+    background-color: #ffeb00;
+    color: black;
+  }
+
+  .botMsg {
+    justify-content: flex-start;
+  }
+
+  .botMsg .message {
+    background-color: #ececec;
+    color: black;
+  }
+
+  /* === NOTE APP === */
+  #noteIcon {
+    position: absolute;
+    top: 100px;
+    left: 200px;
+    width: 70px;
+    height: 80px;
+    cursor: grab;
+  }
+
   #noteWindow {
-    position:absolute;
-    top:140px; left:280px;
-    width:520px; height:420px;
-    display:none;
-    background:var(--note-bg);
-    border-radius:8px;
-    box-shadow:0 6px 18px rgba(0,0,0,0.5);
-    overflow:hidden;
-    user-select:none;
+    position: absolute;
+    top: 200px;
+    left: 400px;
+    width: 500px;
+    height: 400px;
+    background-color: #dcdcdc;
+    border-radius: 8px;
+    display: none;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
   }
 
   #noteTopBar {
-    height:42px;
-    background:var(--note-top);
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:0 10px;
-    cursor:grab;
+    width: 100%;
+    height: 35px;
+    background-color: #888;
+    cursor: grab;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
   }
 
-  #noteTitle { color:#fff; font-weight:bold; font-size:14px; }
-
   #noteCloseBtn {
-    width:26px; height:26px;
-    border:none;
-    border-radius:50%;
-    background:#d94c4c;
-    cursor:pointer;
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 24px;
+    height: 24px;
+    background-color: #e44;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
   }
 
   #noteEditor {
-    position:absolute;
-    top:42px; left:0; right:0; bottom:0;
-    padding:10px;
-    box-sizing:border-box;
-    overflow:auto;
-    outline:none;
-    font-family:monospace;
-    font-size:16px;
-    line-height:1.3;
-    white-space:pre-wrap;
-    word-wrap:break-word;
+    position: absolute;
+    top: 40px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 10px;
+    font-family: monospace;
+    font-size: 16px;
+    line-height: 1.3;
+    outline: none;
+    border: none;
+    background-color: transparent;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
   }
 
-  /* --- Resizers --- */
-  .resizer {
-    position:absolute;
-    background:transparent;
-    z-index:5;
-  }
-  .resizer.right { top:6px; right:0; bottom:6px; width:8px; cursor:e-resize; }
-  .resizer.bottom { left:6px; right:6px; bottom:0; height:8px; cursor:s-resize; }
-  .resizer.br { right:0; bottom:0; width:14px; height:14px; cursor:se-resize; }
-  .resizer.bl { left:0; bottom:0; width:14px; height:14px; cursor:sw-resize; }
-
-  /* highlight transitions */
-  .fade-highlight {
+  .fade {
     transition: background-color 0.3s ease;
   }
 </style>
 </head>
 <body>
 
-<!-- Kakao icon -->
-<img id="icon" src="Screenshot 2025-10-15 144240.png" alt="Kakao">
+<!-- KakaoTalk app -->
+<img id="icon" src="Screenshot 2025-10-15 144240.png" alt="Kakao Icon">
 
-<!-- Note icon -->
-<img id="noteIcon" src="notepad.png" alt="Note">
-
-<!-- Kakao window -->
 <div id="kakaoWindow">
   <div id="kakaoTopBar"></div>
-  <img id="kakaoImage" src="Screenshot 2025-10-15 144717.png" alt="Kakao">
+  <button id="closeBtn"></button>
+  <img id="kakaoImage" src="Screenshot 2025-10-15 144717.png" alt="Kakao Window">
   <div id="messageContainer"></div>
-  <textarea id="typingArea" spellcheck="false"></textarea>
+  <textarea id="typingArea" placeholder="" spellcheck="false"></textarea>
   <button id="sendButton">Send</button>
 </div>
 
-<!-- Note window -->
+<!-- Note app -->
+<img id="noteIcon" src="notepad.png" alt="Note Icon">
 <div id="noteWindow">
-  <div id="noteTopBar">
-    <div id="noteTitle">Notepad</div>
-    <button id="noteCloseBtn"></button>
-  </div>
+  <div id="noteTopBar"></div>
+  <button id="noteCloseBtn"></button>
   <div id="noteEditor" contenteditable="true"></div>
-
-  <!-- Resizers -->
-  <div class="resizer right"></div>
-  <div class="resizer bottom"></div>
-  <div class="resizer br"></div>
-  <div class="resizer bl"></div>
 </div>
 
 <script>
-/* ---------- ICON DRAG ---------- */
-function makeDraggableIcon(el) {
-  let drag=false, offX=0, offY=0;
-  el.addEventListener('mousedown', e => {
-    drag=true; offX=e.offsetX; offY=e.offsetY; el.style.cursor='grabbing';
-  });
-  document.addEventListener('mouseup', ()=>{drag=false; el.style.cursor='grab';});
-  document.addEventListener('mousemove', e=>{
-    if(!drag) return;
-    el.style.left=(e.pageX-offX)+'px';
-    el.style.top=(e.pageY-offY)+'px';
-  });
-}
-makeDraggableIcon(document.getElementById('icon'));
-makeDraggableIcon(document.getElementById('noteIcon'));
-
-/* ---------- KAKAO WINDOW ---------- */
-const kakaoIcon = document.getElementById('icon');
+/* ==== KakaoTalk SCRIPT (unchanged) ==== */
+const icon = document.getElementById('icon');
 const kakaoWindow = document.getElementById('kakaoWindow');
-kakaoIcon.addEventListener('click',()=> kakaoWindow.style.display='block');
+const kakaoTopBar = document.getElementById('kakaoTopBar');
+const closeBtn = document.getElementById('closeBtn');
+const typingArea = document.getElementById('typingArea');
+const sendButton = document.getElementById('sendButton');
+const messageContainer = document.getElementById('messageContainer');
 
-/* ---------- NOTE WINDOW ---------- */
+let savedText = "";
+let messages = [];
+
+// Icon move
+let draggingIcon = false, offsetX = 0, offsetY = 0;
+icon.addEventListener('mousedown', e => { draggingIcon = true; offsetX = e.offsetX; offsetY = e.offsetY; });
+document.addEventListener('mouseup', () => draggingIcon = false);
+document.addEventListener('mousemove', e => {
+  if (draggingIcon) {
+    icon.style.left = e.pageX - offsetX + 'px';
+    icon.style.top = e.pageY - offsetY + 'px';
+  }
+});
+
+// Show window
+icon.addEventListener('click', () => {
+  const isHidden = window.getComputedStyle(kakaoWindow).display === 'none';
+  if (isHidden) {
+    kakaoWindow.style.display = 'block';
+    typingArea.value = savedText;
+    renderMessages();
+  }
+});
+
+// Drag window
+let draggingWindow = false, winOffsetX = 0, winOffsetY = 0;
+kakaoTopBar.addEventListener('mousedown', e => {
+  draggingWindow = true;
+  const rect = kakaoWindow.getBoundingClientRect();
+  winOffsetX = e.clientX - rect.left;
+  winOffsetY = e.clientY - rect.top;
+});
+document.addEventListener('mouseup', () => draggingWindow = false);
+document.addEventListener('mousemove', e => {
+  if (draggingWindow) {
+    kakaoWindow.style.left = e.clientX - winOffsetX + 'px';
+    kakaoWindow.style.top = e.clientY - winOffsetY + 'px';
+  }
+});
+
+// Close
+closeBtn.addEventListener('click', () => {
+  kakaoWindow.style.display = 'none';
+  savedText = typingArea.value;
+  typingArea.value = "";
+});
+
+// Send enable
+typingArea.addEventListener('input', () => {
+  if (typingArea.value.trim().length > 0) {
+    sendButton.classList.add('active');
+    sendButton.disabled = false;
+  } else {
+    sendButton.classList.remove('active');
+    sendButton.disabled = true;
+  }
+});
+
+// Send message
+sendButton.addEventListener('click', () => {
+  const text = typingArea.value.trim();
+  if (text.length === 0) return;
+  messages.push({from: "user", text});
+  typingArea.value = "";
+  sendButton.classList.remove('active');
+  sendButton.disabled = true;
+  renderMessages();
+  const reply = getBotReply(text);
+  setTimeout(() => {
+    messages.push({from: "bot", text: reply});
+    renderMessages();
+  }, 500);
+});
+
+function renderMessages() {
+  messageContainer.innerHTML = "";
+  messages.forEach(msg => {
+    const msgDiv = document.createElement('div');
+    msgDiv.classList.add('messageContainer');
+    msgDiv.classList.add(msg.from === "user" ? 'userMsg' : 'botMsg');
+    const bubble = document.createElement('div');
+    bubble.classList.add('message');
+    bubble.textContent = msg.text;
+    msgDiv.appendChild(bubble);
+    messageContainer.appendChild(msgDiv);
+  });
+  messageContainer.scrollTop = messageContainer.scrollHeight;
+}
+
+kakaoWindow.addEventListener('click', e => {
+  const rect = kakaoWindow.getBoundingClientRect();
+  const clickY = e.clientY - rect.top;
+  const clickFromBottom = rect.height - clickY;
+  if (clickFromBottom < 110) typingArea.focus();
+});
+
+const botResponses = [
+  { pattern: "hello", reply: "Heyyyyy" },
+  { pattern: "hi", reply: "hiiiiiii!" },
+  { pattern: "how are you", reply: "I'm goooooood" },
+  { pattern: "bye", reply: " " },
+  { pattern: "thanks", reply: "You're welcomee" },
+  { pattern: "weather", reply: "I hope it's sunny today" },
+  { pattern: "good", reply: "that's nice" },
+  { pattern: "sad", reply: "Oh nooo" },
+  { pattern: "angry", reply: "..." },
+];
+
+const fuse = new Fuse(botResponses, {
+  keys: ["pattern"],
+  threshold: 0.4,
+  includeScore: true
+});
+
+function getBotReply(text) {
+  const result = fuse.search(text.toLowerCase());
+  if (result.length > 0 && result[0].score < 0.4) {
+    return result[0].item.reply;
+  }
+  return ["sorry, i just woke up","i fell asleep again. wyd?","Really? I'm sooo hungry tho","do you still love me?","sorry, fell asleep"][Math.floor(Math.random()*5)];
+}
+
+/* ==== NOTE APP SCRIPT ==== */
 const noteIcon = document.getElementById('noteIcon');
 const noteWindow = document.getElementById('noteWindow');
 const noteTopBar = document.getElementById('noteTopBar');
 const noteCloseBtn = document.getElementById('noteCloseBtn');
 const noteEditor = document.getElementById('noteEditor');
 
-noteIcon.addEventListener('click',()=> {
-  noteWindow.style.display='block';
-  noteEditor.focus();
-});
-
-noteCloseBtn.addEventListener('click',()=> noteWindow.style.display='none');
-
-/* --- Move window --- */
-let dragW=false, offX=0, offY=0;
-noteTopBar.addEventListener('mousedown', e=>{
-  dragW=true;
-  const r=noteWindow.getBoundingClientRect();
-  offX=e.clientX - r.left;
-  offY=e.clientY - r.top;
-});
-document.addEventListener('mouseup', ()=>dragW=false);
-document.addEventListener('mousemove', e=>{
-  if(!dragW) return;
-  noteWindow.style.left=(e.clientX-offX)+'px';
-  noteWindow.style.top=(e.clientY-offY)+'px';
-});
-
-/* --- Resizing --- */
-function resizeInit(e,mode){
-  e.preventDefault();
-  const startR=noteWindow.getBoundingClientRect();
-  const sx=e.clientX, sy=e.clientY;
-  function move(ev){
-    let dx=ev.clientX-sx, dy=ev.clientY-sy;
-    let w=startR.width, h=startR.height, left=startR.left;
-    if(mode==='right'||mode==='br') w=Math.max(280,startR.width+dx);
-    if(mode==='bottom'||mode==='br') h=Math.max(200,startR.height+dy);
-    if(mode==='bl'){ w=Math.max(280,startR.width-dx); left=startR.left+dx; h=Math.max(200,startR.height+dy);}
-    noteWindow.style.width=w+'px';
-    noteWindow.style.height=h+'px';
-    noteWindow.style.left=left+'px';
-  }
-  function up(){document.removeEventListener('mousemove',move);document.removeEventListener('mouseup',up);}
-  document.addEventListener('mousemove',move);
-  document.addEventListener('mouseup',up);
-}
-noteWindow.querySelector('.resizer.right').onmousedown=e=>resizeInit(e,'right');
-noteWindow.querySelector('.resizer.bottom').onmousedown=e=>resizeInit(e,'bottom');
-noteWindow.querySelector('.resizer.br').onmousedown=e=>resizeInit(e,'br');
-noteWindow.querySelector('.resizer.bl').onmousedown=e=>resizeInit(e,'bl');
-
-/* ---------- Highlight Logic ---------- */
 const targetText = "INSERT TEXT HERE";
 
-function highlightText(node){
-  const text = node.innerText;
-  node.innerHTML = '';
-  for(let i=0;i<text.length;i++){
-    const ch = text[i];
-    const exp = targetText[i] || '';
-    const span = document.createElement('span');
-    span.textContent = ch;
-    span.classList.add('fade-highlight');
-    if(!exp){
-      span.style.background= getComputedStyle(document.documentElement).getPropertyValue('--wrong-yellow');
-    } else if(ch === exp){
-      span.style.background = getComputedStyle(document.documentElement).getPropertyValue('--dark-green');
-      span.style.color = "#fff";
-      fadeOut(span);
-    } else if(ch.toLowerCase() === exp.toLowerCase()){
-      span.style.background = getComputedStyle(document.documentElement).getPropertyValue('--light-green');
-      fadeOut(span);
-    } else {
-      span.style.background = getComputedStyle(document.documentElement).getPropertyValue('--wrong-yellow');
-    }
-    node.appendChild(span);
+noteIcon.addEventListener('mousedown', e => {
+  noteIcon.dataset.dragging = true;
+  noteIcon.dataset.offsetX = e.offsetX;
+  noteIcon.dataset.offsetY = e.offsetY;
+});
+document.addEventListener('mouseup', () => noteIcon.dataset.dragging = false);
+document.addEventListener('mousemove', e => {
+  if (noteIcon.dataset.dragging === "true") {
+    noteIcon.style.left = (e.pageX - noteIcon.dataset.offsetX) + "px";
+    noteIcon.style.top = (e.pageY - noteIcon.dataset.offsetY) + "px";
   }
-}
-
-function fadeOut(el){
-  setTimeout(()=>{
-    el.style.transition = "background-color 1s ease, color 1s ease";
-    el.style.background = "transparent";
-    el.style.color = "#000";
-  }, 5000);
-}
-
-noteEditor.addEventListener('input', ()=>{
-  const sel = window.getSelection();
-  const range = sel.getRangeAt(0);
-  const pos = range.startOffset;
-  highlightText(noteEditor);
-  try {
-    const child = noteEditor.childNodes[pos] || noteEditor.lastChild;
-    if(child) {
-      const newRange = document.createRange();
-      newRange.setStart(child,1);
-      newRange.collapse(true);
-      sel.removeAllRanges();
-      sel.addRange(newRange);
-    }
-  } catch(e){}
 });
 
+noteIcon.addEventListener('click', () => noteWindow.style.display = "block");
+noteCloseBtn.addEventListener('click', () => noteWindow.style.display = "none");
+
+let dragNote = false, noteOffsetX = 0, noteOffsetY = 0;
+noteTopBar.addEventListener('mousedown', e => {
+  dragNote = true;
+  const r = noteWindow.getBoundingClientRect();
+  noteOffsetX = e.clientX - r.left;
+  noteOffsetY = e.clientY - r.top;
+});
+document.addEventListener('mouseup', () => dragNote = false);
+document.addEventListener('mousemove', e => {
+  if (!dragNote) return;
+  noteWindow.style.left = (e.clientX - noteOffsetX) + "px";
+  noteWindow.style.top = (e.clientY - noteOffsetY) + "px";
+});
+
+// highlight logic
+noteEditor.addEventListener('input', () => {
+  const text = noteEditor.innerText;
+  noteEditor.innerHTML = "";
+  for (let i = 0; i < text.length; i++) {
+    const span = document.createElement('span');
+    span.textContent = text[i];
+    span.classList.add('fade');
+    if (targetText[i] === text[i]) {
+      span.style.background = "green";
+      setTimeout(() => {
+        span.style.transition = "background-color 1s ease";
+        span.style.background = "transparent";
+      }, 5000);
+    } else if (targetText[i] && targetText[i].toLowerCase() === text[i].toLowerCase()) {
+      span.style.background = "lightgreen";
+      setTimeout(() => {
+        span.style.transition = "background-color 1s ease";
+        span.style.background = "transparent";
+      }, 5000);
+    } else {
+      span.style.background = "yellow";
+    }
+    noteEditor.appendChild(span);
+  }
+
+  // keep cursor at end
+  const range = document.createRange();
+  const sel = window.getSelection();
+  range.selectNodeContents(noteEditor);
+  range.collapse(false);
+  sel.removeAllRanges();
+  sel.addRange(range);
+});
 </script>
 </body>
 </html>
