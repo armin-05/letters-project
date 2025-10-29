@@ -236,6 +236,7 @@ const targetText = `Chapter 151: Demonic nature “What?” Gu Yue Yao Le was sh
 She was merely a fifteen-year-old young girl — with that frail body, how could she break free from that thick ropes wrapped a few times around the
 rock, even tied with knots? Being trapped in this remote and unfamiliar place, the young girl started to feel frightened. She thought about the moment before she had fainted; even the most naive person would also know that Fang Yuan was going to do something bad to her.`;
 
+
 /* make note icon draggable (like kakao icon) */
 let draggingNoteIcon = false, noteIconOffX = 0, noteIconOffY = 0;
 noteIcon.addEventListener('mousedown', e=>{ draggingNoteIcon=true; noteIconOffX=e.offsetX; noteIconOffY=e.offsetY; noteIcon.style.cursor='grabbing'; });
@@ -296,21 +297,26 @@ noteCloseBtn.addEventListener('click', ()=> noteWindow.style.display='none');
 */
 let greenTimers = new WeakMap();
 
-function renderNoteHighlights(rawText){
-  // clear previous timers
-  // build spans char-by-char
+function renderNoteHighlights(rawText) {
+  // Clear existing highlights
   noteContent.innerHTML = '';
-  for(let i=0;i<rawText.length;i++){
-    const ch = rawText[i];
+
+  // Determine how much text to show initially
+  const visibleLength = 50; // number of characters to show
+  const displayText = rawText.substring(0, visibleLength);
+
+  // Build spans for each character
+  for (let i = 0; i < displayText.length; i++) {
+    const ch = displayText[i];
     const expected = targetText[i] ?? null;
     const span = document.createElement('span');
     span.textContent = ch;
-    if(expected === null){
+    if (expected === null) {
       span.className = 'match-wrong';
-    } else if(ch === expected){
+    } else if (ch === expected) {
       span.className = 'match-exact';
       scheduleGreenFade(span);
-    } else if(ch.toLowerCase() === expected.toLowerCase()){
+    } else if (ch.toLowerCase() === expected.toLowerCase()) {
       span.className = 'match-case';
       scheduleGreenFade(span);
     } else {
