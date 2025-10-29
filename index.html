@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KakaoTalk + Note App</title>
+<title>KakaoTalk + Note</title>
 <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0"></script>
 <style>
   body {
@@ -12,7 +12,30 @@
     overflow: hidden;
   }
 
-  /* === KakaoTalk ICON + WINDOW (UNCHANGED) === */
+  /* ========== COMMON WINDOW STYLE ========== */
+  .appWindow {
+    position: absolute;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: default;
+    resize: both;
+    min-width: 250px;
+    min-height: 200px;
+  }
+
+  .resize-handle {
+    position: absolute;
+    bottom: 6px;
+    right: 6px;
+    width: 14px;
+    height: 14px;
+    background: radial-gradient(circle, #999 40%, transparent 42%);
+    border-radius: 50%;
+    cursor: nwse-resize;
+    z-index: 30;
+  }
+
+  /* ========== KAKAO ICON ========== */
   #icon {
     position: absolute;
     top: 100px;
@@ -22,14 +45,11 @@
     cursor: grab;
   }
 
+  /* KakaoTalk window */
   #kakaoWindow {
-    position: absolute;
     top: 200px;
     left: 200px;
-    border-radius: 8px;
-    overflow: hidden;
     display: none;
-    cursor: default;
   }
 
   #kakaoTopBar {
@@ -129,141 +149,215 @@
     margin-bottom: 4px;
   }
 
-  .userMsg {
-    justify-content: flex-end;
-  }
+  .userMsg { justify-content: flex-end; }
+  .userMsg .message { background-color: #ffeb00; color: black; }
+  .botMsg { justify-content: flex-start; }
+  .botMsg .message { background-color: #ececec; color: black; }
 
-  .userMsg .message {
-    background-color: #ffeb00;
-    color: black;
-  }
-
-  .botMsg {
-    justify-content: flex-start;
-  }
-
-  .botMsg .message {
-    background-color: #ececec;
-    color: black;
-  }
-
-  /* === NOTE APP === */
+  /* ========== NOTE APP ========== */
   #noteIcon {
     position: absolute;
     top: 100px;
     left: 200px;
     width: 70px;
-    height: 80px;
+    height: 70px;
+    background: gray;
+    color: white;
+    font-family: Arial, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
     cursor: grab;
   }
 
   #noteWindow {
-    position: absolute;
-    top: 200px;
+    top: 250px;
     left: 400px;
     width: 500px;
     height: 400px;
-    background-color: #dcdcdc;
-    border-radius: 8px;
+    background-color: #d3d3d3;
     display: none;
-    box-shadow: 0 0 10px rgba(0,0,0,0.5);
   }
 
   #noteTopBar {
-    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
     height: 35px;
-    background-color: #888;
+    width: 100%;
+    background-color: #8c8c8c;
     cursor: grab;
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
+    z-index: 5;
   }
 
   #noteCloseBtn {
     position: absolute;
-    top: 6px;
-    right: 6px;
-    width: 24px;
-    height: 24px;
-    background-color: #e44;
+    top: 5px;
+    right: 8px;
+    width: 22px;
+    height: 22px;
+    background: #c0392b;
     border: none;
     border-radius: 50%;
     cursor: pointer;
+    z-index: 6;
   }
 
-  #noteEditor {
+  #noteContent {
     position: absolute;
     top: 40px;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    padding: 10px;
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
     font-family: monospace;
     font-size: 16px;
-    line-height: 1.3;
+    color: black;
     outline: none;
     border: none;
-    background-color: transparent;
-    overflow: auto;
+    background: transparent;
     white-space: pre-wrap;
-    word-wrap: break-word;
+    overflow: auto;
   }
 
-  .fade {
-    transition: background-color 0.3s ease;
+  .highlight-green {
+    background-color: #a6e3a1;
+    transition: background-color 0.2s ease;
+  }
+  .highlight-yellow {
+    background-color: #ffeb99;
   }
 </style>
 </head>
 <body>
 
-<!-- KakaoTalk app -->
+<!-- KakaoTalk -->
 <img id="icon" src="Screenshot 2025-10-15 144240.png" alt="Kakao Icon">
-
-<div id="kakaoWindow">
+<div id="kakaoWindow" class="appWindow">
   <div id="kakaoTopBar"></div>
   <button id="closeBtn"></button>
   <img id="kakaoImage" src="Screenshot 2025-10-15 144717.png" alt="Kakao Window">
   <div id="messageContainer"></div>
-  <textarea id="typingArea" placeholder="" spellcheck="false"></textarea>
+  <textarea id="typingArea" spellcheck="false"></textarea>
   <button id="sendButton">Send</button>
+  <div class="resize-handle"></div>
 </div>
 
-<!-- Note app -->
-<img id="noteIcon" src="notepad.png" alt="Note Icon">
-<div id="noteWindow">
+<!-- Note App -->
+<div id="noteIcon">Note</div>
+<div id="noteWindow" class="appWindow">
   <div id="noteTopBar"></div>
   <button id="noteCloseBtn"></button>
-  <div id="noteEditor" contenteditable="true"></div>
+  <div id="noteContent" contenteditable="true"></div>
+  <div class="resize-handle"></div>
 </div>
 
 <script>
-/* ==== KakaoTalk SCRIPT (unchanged) ==== */
-const icon = document.getElementById('icon');
-const kakaoWindow = document.getElementById('kakaoWindow');
-const kakaoTopBar = document.getElementById('kakaoTopBar');
-const closeBtn = document.getElementById('closeBtn');
-const typingArea = document.getElementById('typingArea');
-const sendButton = document.getElementById('sendButton');
-const messageContainer = document.getElementById('messageContainer');
+let zIndexCounter = 10;
 
-let savedText = "";
-let messages = [];
+// === Bring window to front ===
+function bringToFront(element) {
+  zIndexCounter++;
+  element.style.zIndex = zIndexCounter;
+}
+
+// === NOTE APP ===
+const noteIcon = document.getElementById("noteIcon");
+const noteWindow = document.getElementById("noteWindow");
+const noteTopBar = document.getElementById("noteTopBar");
+const noteCloseBtn = document.getElementById("noteCloseBtn");
+const noteContent = document.getElementById("noteContent");
+
+// target text
+const targetText = "INSERT TEXT HERE";
+
+noteIcon.addEventListener("mousedown", e => {
+  dragStart(e, noteIcon);
+});
+noteIcon.addEventListener("click", () => {
+  noteWindow.style.display = "block";
+  bringToFront(noteWindow);
+});
+
+noteCloseBtn.addEventListener("click", () => {
+  noteWindow.style.display = "none";
+});
+
+// Drag window
+let dragData = { active: false, offsetX: 0, offsetY: 0, target: null };
+noteTopBar.addEventListener("mousedown", e => {
+  dragData.active = true;
+  const rect = noteWindow.getBoundingClientRect();
+  dragData.offsetX = e.clientX - rect.left;
+  dragData.offsetY = e.clientY - rect.top;
+  bringToFront(noteWindow);
+});
+document.addEventListener("mouseup", () => (dragData.active = false));
+document.addEventListener("mousemove", e => {
+  if (dragData.active) {
+    noteWindow.style.left = e.clientX - dragData.offsetX + "px";
+    noteWindow.style.top = e.clientY - dragData.offsetY + "px";
+  }
+});
+
+// Highlight logic
+noteContent.addEventListener("input", () => {
+  const text = noteContent.innerText;
+  noteContent.innerHTML = "";
+  for (let i = 0; i < text.length; i++) {
+    const span = document.createElement("span");
+    const correct = targetText[i] === text[i];
+    if (correct && text[i] !== undefined) {
+      span.textContent = text[i];
+      span.className = "highlight-green";
+      noteContent.appendChild(span);
+      setTimeout(() => {
+        span.classList.remove("highlight-green");
+      }, 5000);
+    } else {
+      span.textContent = text[i];
+      if (text[i] !== undefined) span.className = "highlight-yellow";
+      noteContent.appendChild(span);
+    }
+  }
+  placeCaretAtEnd(noteContent);
+});
+
+function placeCaretAtEnd(el) {
+  el.focus();
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  range.collapse(false);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+
+// === KAKAO TALK ===
+const icon = document.getElementById("icon");
+const kakaoWindow = document.getElementById("kakaoWindow");
+const kakaoTopBar = document.getElementById("kakaoTopBar");
+const closeBtn = document.getElementById("closeBtn");
+const typingArea = document.getElementById("typingArea");
+const sendButton = document.getElementById("sendButton");
+const messageContainer = document.getElementById("messageContainer");
+
+let savedText = "", messages = [];
 
 // Icon move
 let draggingIcon = false, offsetX = 0, offsetY = 0;
 icon.addEventListener('mousedown', e => { draggingIcon = true; offsetX = e.offsetX; offsetY = e.offsetY; });
 document.addEventListener('mouseup', () => draggingIcon = false);
 document.addEventListener('mousemove', e => {
-  if (draggingIcon) {
-    icon.style.left = e.pageX - offsetX + 'px';
-    icon.style.top = e.pageY - offsetY + 'px';
-  }
+  if (draggingIcon) { icon.style.left = e.pageX - offsetX + 'px'; icon.style.top = e.pageY - offsetY + 'px'; }
 });
 
-// Show window
+// Show/Hide
 icon.addEventListener('click', () => {
   const isHidden = window.getComputedStyle(kakaoWindow).display === 'none';
   if (isHidden) {
     kakaoWindow.style.display = 'block';
+    bringToFront(kakaoWindow);
     typingArea.value = savedText;
     renderMessages();
   }
@@ -273,6 +367,7 @@ icon.addEventListener('click', () => {
 let draggingWindow = false, winOffsetX = 0, winOffsetY = 0;
 kakaoTopBar.addEventListener('mousedown', e => {
   draggingWindow = true;
+  bringToFront(kakaoWindow);
   const rect = kakaoWindow.getBoundingClientRect();
   winOffsetX = e.clientX - rect.left;
   winOffsetY = e.clientY - rect.top;
@@ -285,14 +380,13 @@ document.addEventListener('mousemove', e => {
   }
 });
 
-// Close
 closeBtn.addEventListener('click', () => {
   kakaoWindow.style.display = 'none';
   savedText = typingArea.value;
   typingArea.value = "";
 });
 
-// Send enable
+// Send button logic
 typingArea.addEventListener('input', () => {
   if (typingArea.value.trim().length > 0) {
     sendButton.classList.add('active');
@@ -303,7 +397,6 @@ typingArea.addEventListener('input', () => {
   }
 });
 
-// Send message
 sendButton.addEventListener('click', () => {
   const text = typingArea.value.trim();
   if (text.length === 0) return;
@@ -323,8 +416,7 @@ function renderMessages() {
   messageContainer.innerHTML = "";
   messages.forEach(msg => {
     const msgDiv = document.createElement('div');
-    msgDiv.classList.add('messageContainer');
-    msgDiv.classList.add(msg.from === "user" ? 'userMsg' : 'botMsg');
+    msgDiv.classList.add('messageContainer', msg.from === "user" ? 'userMsg' : 'botMsg');
     const bubble = document.createElement('div');
     bubble.classList.add('message');
     bubble.textContent = msg.text;
@@ -334,111 +426,34 @@ function renderMessages() {
   messageContainer.scrollTop = messageContainer.scrollHeight;
 }
 
-kakaoWindow.addEventListener('click', e => {
-  const rect = kakaoWindow.getBoundingClientRect();
-  const clickY = e.clientY - rect.top;
-  const clickFromBottom = rect.height - clickY;
-  if (clickFromBottom < 110) typingArea.focus();
-});
-
 const botResponses = [
   { pattern: "hello", reply: "Heyyyyy" },
-  { pattern: "hi", reply: "hiiiiiii!" },
+  { pattern: "hi", reply: "hiiiiiii! " },
   { pattern: "how are you", reply: "I'm goooooood" },
   { pattern: "bye", reply: " " },
   { pattern: "thanks", reply: "You're welcomee" },
-  { pattern: "weather", reply: "I hope it's sunny today" },
-  { pattern: "good", reply: "that's nice" },
+  { pattern: "weather", reply: "I hope its sunny today " },
+  { pattern: "good", reply: "thats nice" },
   { pattern: "sad", reply: "Oh nooo" },
   { pattern: "angry", reply: "..." },
 ];
-
-const fuse = new Fuse(botResponses, {
-  keys: ["pattern"],
-  threshold: 0.4,
-  includeScore: true
-});
-
+const fuse = new Fuse(botResponses, { keys: ["pattern"], threshold: 0.4, includeScore: true });
 function getBotReply(text) {
   const result = fuse.search(text.toLowerCase());
-  if (result.length > 0 && result[0].score < 0.4) {
-    return result[0].item.reply;
-  }
-  return ["sorry, i just woke up","i fell asleep again. wyd?","Really? I'm sooo hungry tho","do you still love me?","sorry, fell asleep"][Math.floor(Math.random()*5)];
+  if (result.length > 0 && result[0].score < 0.4) return result[0].item.reply;
+  const arr = [
+    "sorry, i just woke up. im sooo tired today",
+    "i fell asleep again. wyd?",
+    "Really? im soooo hungry tho",
+    "do you still love me?",
+    "sorry, fell asleep"
+  ];
+  return arr[Math.floor(Math.random() * arr.length)];
 }
 
-/* ==== NOTE APP SCRIPT ==== */
-const noteIcon = document.getElementById('noteIcon');
-const noteWindow = document.getElementById('noteWindow');
-const noteTopBar = document.getElementById('noteTopBar');
-const noteCloseBtn = document.getElementById('noteCloseBtn');
-const noteEditor = document.getElementById('noteEditor');
-
-const targetText = "INSERT TEXT HERE";
-
-noteIcon.addEventListener('mousedown', e => {
-  noteIcon.dataset.dragging = true;
-  noteIcon.dataset.offsetX = e.offsetX;
-  noteIcon.dataset.offsetY = e.offsetY;
-});
-document.addEventListener('mouseup', () => noteIcon.dataset.dragging = false);
-document.addEventListener('mousemove', e => {
-  if (noteIcon.dataset.dragging === "true") {
-    noteIcon.style.left = (e.pageX - noteIcon.dataset.offsetX) + "px";
-    noteIcon.style.top = (e.pageY - noteIcon.dataset.offsetY) + "px";
-  }
-});
-
-noteIcon.addEventListener('click', () => noteWindow.style.display = "block");
-noteCloseBtn.addEventListener('click', () => noteWindow.style.display = "none");
-
-let dragNote = false, noteOffsetX = 0, noteOffsetY = 0;
-noteTopBar.addEventListener('mousedown', e => {
-  dragNote = true;
-  const r = noteWindow.getBoundingClientRect();
-  noteOffsetX = e.clientX - r.left;
-  noteOffsetY = e.clientY - r.top;
-});
-document.addEventListener('mouseup', () => dragNote = false);
-document.addEventListener('mousemove', e => {
-  if (!dragNote) return;
-  noteWindow.style.left = (e.clientX - noteOffsetX) + "px";
-  noteWindow.style.top = (e.clientY - noteOffsetY) + "px";
-});
-
-// highlight logic
-noteEditor.addEventListener('input', () => {
-  const text = noteEditor.innerText;
-  noteEditor.innerHTML = "";
-  for (let i = 0; i < text.length; i++) {
-    const span = document.createElement('span');
-    span.textContent = text[i];
-    span.classList.add('fade');
-    if (targetText[i] === text[i]) {
-      span.style.background = "green";
-      setTimeout(() => {
-        span.style.transition = "background-color 1s ease";
-        span.style.background = "transparent";
-      }, 5000);
-    } else if (targetText[i] && targetText[i].toLowerCase() === text[i].toLowerCase()) {
-      span.style.background = "lightgreen";
-      setTimeout(() => {
-        span.style.transition = "background-color 1s ease";
-        span.style.background = "transparent";
-      }, 5000);
-    } else {
-      span.style.background = "yellow";
-    }
-    noteEditor.appendChild(span);
-  }
-
-  // keep cursor at end
-  const range = document.createRange();
-  const sel = window.getSelection();
-  range.selectNodeContents(noteEditor);
-  range.collapse(false);
-  sel.removeAllRanges();
-  sel.addRange(range);
+// Clicking brings window to front
+[kakaoWindow, noteWindow].forEach(w => {
+  w.addEventListener("mousedown", () => bringToFront(w));
 });
 </script>
 </body>
