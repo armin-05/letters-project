@@ -1,361 +1,139 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KakaoTalk + Note</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>KakaoTalk + Note (fixed)</title>
 <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0"></script>
 <style>
-  body {
-    margin: 0;
-    background-color: black;
-    overflow: hidden;
+  :root{
+    --bg-black:#000;
+    --note-bg:#d3d3d3;
+    --note-top:#8c8c8c;
+    --green-exact:#1e7f34;   /* dark green */
+    --green-case:#9cff8a;    /* light green */
+    --yellow-wrong:#ffeb66;
   }
+  html,body{height:100%;margin:0;background:var(--bg-black);overflow:hidden;font-family:Arial,Helvetica,sans-serif;}
 
-  /* ========== COMMON WINDOW STYLE ========== */
-  .appWindow {
-    position: absolute;
-    border-radius: 8px;
-    overflow: hidden;
-    cursor: default;
-    resize: both;
-    min-width: 250px;
-    min-height: 200px;
+  /* --- KakaoTalk EXACT (kept as original; non-resizable) --- */
+  #icon{
+    position:absolute; top:100px; left:100px; width:70px; height:80px; cursor:grab;
   }
-
-  .resize-handle {
-    position: absolute;
-    bottom: 6px;
-    right: 6px;
-    width: 14px;
-    height: 14px;
-    background: radial-gradient(circle, #999 40%, transparent 42%);
-    border-radius: 50%;
-    cursor: nwse-resize;
-    z-index: 30;
+  #kakaoWindow{
+    position:absolute; top:200px; left:200px; border-radius:8px; overflow:hidden; display:none; cursor:default;
+    /* no resize, no resize handle for kakao */
   }
-
-  /* ========== KAKAO ICON ========== */
-  #icon {
-    position: absolute;
-    top: 100px;
-    left: 100px;
-    width: 70px;
-    height: 80px;
-    cursor: grab;
+  #kakaoTopBar{
+    position:absolute; top:0; left:0; height:40px; width:100%; background:transparent; cursor:grab; z-index:10;
   }
-
-  /* KakaoTalk window */
-  #kakaoWindow {
-    top: 200px;
-    left: 200px;
-    display: none;
+  #kakaoImage{ display:block; height:auto; width:auto; max-width:100%; max-height:100%; }
+  #closeBtn{ position:absolute; top:8px; right:8px; width:32px; height:32px; background:transparent; cursor:pointer; border:none; outline:none; z-index:20; }
+  #typingArea{
+    position:absolute; left:10px; bottom:65px; width:calc(100% - 90px); height:70px;
+    font-family:Arial,sans-serif; font-size:15px; color:black; background:transparent; border:none; outline:none; resize:none; z-index:15;
   }
-
-  #kakaoTopBar {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 40px;
-    width: 100%;
-    background: transparent;
-    cursor: grab;
-    z-index: 10;
+  #sendButton{
+    position:absolute; right:15px; bottom:16px; width:60px; height:30px; font-weight:bold; color:black;
+    background-color:#c0c0c0; border:none; border-radius:4px; cursor:not-allowed; z-index:16; transition: background-color .2s;
   }
-
-  #kakaoImage {
-    display: block;
-    height: auto;
-    width: auto;
-    max-width: 100%;
-    max-height: 100%;
+  #sendButton.active{ background-color:#ffeb00; cursor:pointer; }
+  #messageContainer{
+    position:absolute; top:115px; left:10px; right:10px; bottom:147px; overflow-y:auto; z-index:5;
   }
+  .message{ display:inline-block; padding:8px 12px; border-radius:12px; margin:4px 0; max-width:70%; word-wrap:break-word; font-size:14px; font-family:Arial,sans-serif; }
+  .messageContainer{ display:flex; margin-bottom:4px; }
+  .userMsg{ justify-content:flex-end; } .userMsg .message{ background-color:#ffeb00; color:black; }
+  .botMsg{ justify-content:flex-start; } .botMsg .message{ background-color:#ececec; color:black; }
 
-  #closeBtn {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 32px;
-    height: 32px;
-    background: transparent;
-    cursor: pointer;
-    border: none;
-    outline: none;
-    z-index: 20;
-  }
-
-  #typingArea {
-    position: absolute;
-    left: 10px;
-    bottom: 65px;
-    width: calc(100% - 90px);
-    height: 70px;
-    font-family: Arial, sans-serif;
-    font-size: 15px;
-    color: black;
-    background: transparent;
-    border: none;
-    outline: none;
-    resize: none;
-    z-index: 15;
-  }
-
-  #sendButton {
-    position: absolute;
-    right: 15px;
-    bottom: 16px;
-    width: 60px;
-    height: 30px;
-    font-family: Arial, sans-serif;
-    font-size: 14px;
-    font-weight: bold;
-    color: black;
-    background-color: #c0c0c0;
-    border: none;
-    border-radius: 4px;
-    cursor: not-allowed;
-    z-index: 16;
-    transition: background-color 0.2s ease;
-  }
-
-  #sendButton.active {
-    background-color: #ffeb00;
-    cursor: pointer;
-  }
-
-  #messageContainer {
-    position: absolute;
-    top: 115px;
-    left: 10px;
-    right: 10px;
-    bottom: 147px;
-    overflow-y: auto;
-    z-index: 5;
-  }
-
-  .message {
-    display: inline-block;
-    padding: 8px 12px;
-    border-radius: 12px;
-    margin: 4px 0;
-    max-width: 70%;
-    word-wrap: break-word;
-    font-family: Arial, sans-serif;
-    font-size: 14px;
-  }
-
-  .messageContainer {
-    display: flex;
-    margin-bottom: 4px;
-  }
-
-  .userMsg { justify-content: flex-end; }
-  .userMsg .message { background-color: #ffeb00; color: black; }
-  .botMsg { justify-content: flex-start; }
-  .botMsg .message { background-color: #ececec; color: black; }
-
-  /* ========== NOTE APP ========== */
+  /* --- NOTE icon + window --- */
   #noteIcon {
-    position: absolute;
-    top: 100px;
-    left: 200px;
-    width: 70px;
-    height: 70px;
-    background: gray;
-    color: white;
-    font-family: Arial, sans-serif;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 12px;
-    cursor: grab;
+    position:absolute; top:100px; left:200px; width:70px; height:80px; cursor:grab;
+    background:transparent; /* use your png */
   }
 
-  #noteWindow {
-    top: 250px;
-    left: 400px;
-    width: 500px;
-    height: 400px;
-    background-color: #d3d3d3;
-    display: none;
+  #noteWindow{
+    position:absolute; top:220px; left:420px; width:520px; height:420px; background:var(--note-bg);
+    border-radius:8px; display:none; box-shadow:0 6px 18px rgba(0,0,0,0.5); overflow:hidden;
+    min-width:260px; min-height:180px;
+  }
+  #noteTopBar{ position:absolute; top:0; left:0; height:36px; width:100%; background:var(--note-top); cursor:grab; z-index:10; }
+  #noteCloseBtn{ position:absolute; top:6px; right:8px; width:22px; height:22px; background:#d94c4c; border-radius:50%; border:none; cursor:pointer; z-index:12; }
+  #noteContent{
+    position:absolute; top:44px; left:10px; right:10px; bottom:10px;
+    padding:6px; box-sizing:border-box; font-family:monospace; font-size:16px; line-height:1.3;
+    outline:none; background:transparent; white-space:pre-wrap; word-wrap:break-word; overflow:auto;
   }
 
-  #noteTopBar {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 35px;
-    width: 100%;
-    background-color: #8c8c8c;
-    cursor: grab;
-    z-index: 5;
+  /* visible circular resize handle only for note window */
+  #noteWindow .resize-handle{
+    position:absolute; right:8px; bottom:8px; width:14px; height:14px;
+    background: radial-gradient(circle, #777 30%, transparent 31%); border-radius:50%; cursor:nwse-resize; z-index:60;
   }
 
-  #noteCloseBtn {
-    position: absolute;
-    top: 5px;
-    right: 8px;
-    width: 22px;
-    height: 22px;
-    background: #c0392b;
-    border: none;
-    border-radius: 50%;
-    cursor: pointer;
-    z-index: 6;
-  }
-
-  #noteContent {
-    position: absolute;
-    top: 40px;
-    left: 10px;
-    right: 10px;
-    bottom: 10px;
-    font-family: monospace;
-    font-size: 16px;
-    color: black;
-    outline: none;
-    border: none;
-    background: transparent;
-    white-space: pre-wrap;
-    overflow: auto;
-  }
-
-  .highlight-green {
-    background-color: #a6e3a1;
-    transition: background-color 0.2s ease;
-  }
-  .highlight-yellow {
-    background-color: #ffeb99;
-  }
+  /* highlight classes */
+  .match-exact{ background:var(--green-exact); color:#fff; transition: background-color .3s; }
+  .match-case{ background:var(--green-case); color:#000; transition: background-color .3s; }
+  .match-wrong{ background:var(--yellow-wrong); color:#000; }
 </style>
 </head>
 <body>
 
-<!-- KakaoTalk -->
+<!-- KAKAO (exact original) -->
 <img id="icon" src="Screenshot 2025-10-15 144240.png" alt="Kakao Icon">
-<div id="kakaoWindow" class="appWindow">
+
+<div id="kakaoWindow">
   <div id="kakaoTopBar"></div>
-  <button id="closeBtn"></button>
+  <button id="closeBtn" title="close"></button>
   <img id="kakaoImage" src="Screenshot 2025-10-15 144717.png" alt="Kakao Window">
   <div id="messageContainer"></div>
-  <textarea id="typingArea" spellcheck="false"></textarea>
+  <textarea id="typingArea" placeholder="" spellcheck="false"></textarea>
   <button id="sendButton">Send</button>
-  <div class="resize-handle"></div>
 </div>
 
-<!-- Note App -->
-<div id="noteIcon">Note</div>
-<div id="noteWindow" class="appWindow">
+<!-- NOTE (file) -->
+<img id="noteIcon" src="notepad.png" alt="Note Icon">
+<div id="noteWindow">
   <div id="noteTopBar"></div>
-  <button id="noteCloseBtn"></button>
-  <div id="noteContent" contenteditable="true"></div>
-  <div class="resize-handle"></div>
+  <button id="noteCloseBtn" title="close"></button>
+  <div id="noteContent" contenteditable="true" aria-label="Note editor"></div>
+  <div class="resize-handle" title="resize"></div>
 </div>
 
 <script>
-let zIndexCounter = 10;
-
-// === Bring window to front ===
-function bringToFront(element) {
+/* ---------- z-index management (bring clicked/opened window to front) ---------- */
+let zIndexCounter = 100;
+function bringToFront(elem){
   zIndexCounter++;
-  element.style.zIndex = zIndexCounter;
+  elem.style.zIndex = zIndexCounter;
 }
 
-// === NOTE APP ===
-const noteIcon = document.getElementById("noteIcon");
-const noteWindow = document.getElementById("noteWindow");
-const noteTopBar = document.getElementById("noteTopBar");
-const noteCloseBtn = document.getElementById("noteCloseBtn");
-const noteContent = document.getElementById("noteContent");
+/* ========== KAKAO (unchanged functionality, non-resizable) ========== */
+const icon = document.getElementById('icon');
+const kakaoWindow = document.getElementById('kakaoWindow');
+const kakaoTopBar = document.getElementById('kakaoTopBar');
+const closeBtn = document.getElementById('closeBtn');
+const typingArea = document.getElementById('typingArea');
+const sendButton = document.getElementById('sendButton');
+const messageContainer = document.getElementById('messageContainer');
 
-// target text
-const targetText = "INSERT TEXT HERE";
+let savedText = "";
+let messages = [];
 
-noteIcon.addEventListener("mousedown", e => {
-  dragStart(e, noteIcon);
-});
-noteIcon.addEventListener("click", () => {
-  noteWindow.style.display = "block";
-  bringToFront(noteWindow);
-});
-
-noteCloseBtn.addEventListener("click", () => {
-  noteWindow.style.display = "none";
-});
-
-// Drag window
-let dragData = { active: false, offsetX: 0, offsetY: 0, target: null };
-noteTopBar.addEventListener("mousedown", e => {
-  dragData.active = true;
-  const rect = noteWindow.getBoundingClientRect();
-  dragData.offsetX = e.clientX - rect.left;
-  dragData.offsetY = e.clientY - rect.top;
-  bringToFront(noteWindow);
-});
-document.addEventListener("mouseup", () => (dragData.active = false));
-document.addEventListener("mousemove", e => {
-  if (dragData.active) {
-    noteWindow.style.left = e.clientX - dragData.offsetX + "px";
-    noteWindow.style.top = e.clientY - dragData.offsetY + "px";
-  }
-});
-
-// Highlight logic
-noteContent.addEventListener("input", () => {
-  const text = noteContent.innerText;
-  noteContent.innerHTML = "";
-  for (let i = 0; i < text.length; i++) {
-    const span = document.createElement("span");
-    const correct = targetText[i] === text[i];
-    if (correct && text[i] !== undefined) {
-      span.textContent = text[i];
-      span.className = "highlight-green";
-      noteContent.appendChild(span);
-      setTimeout(() => {
-        span.classList.remove("highlight-green");
-      }, 5000);
-    } else {
-      span.textContent = text[i];
-      if (text[i] !== undefined) span.className = "highlight-yellow";
-      noteContent.appendChild(span);
-    }
-  }
-  placeCaretAtEnd(noteContent);
-});
-
-function placeCaretAtEnd(el) {
-  el.focus();
-  const range = document.createRange();
-  range.selectNodeContents(el);
-  range.collapse(false);
-  const sel = window.getSelection();
-  sel.removeAllRanges();
-  sel.addRange(range);
-}
-
-// === KAKAO TALK ===
-const icon = document.getElementById("icon");
-const kakaoWindow = document.getElementById("kakaoWindow");
-const kakaoTopBar = document.getElementById("kakaoTopBar");
-const closeBtn = document.getElementById("closeBtn");
-const typingArea = document.getElementById("typingArea");
-const sendButton = document.getElementById("sendButton");
-const messageContainer = document.getElementById("messageContainer");
-
-let savedText = "", messages = [];
-
-// Icon move
-let draggingIcon = false, offsetX = 0, offsetY = 0;
-icon.addEventListener('mousedown', e => { draggingIcon = true; offsetX = e.offsetX; offsetY = e.offsetY; });
-document.addEventListener('mouseup', () => draggingIcon = false);
+// Icon drag (kakao icon)
+let draggingIcon = false, iconOffX = 0, iconOffY = 0;
+icon.addEventListener('mousedown', e => { draggingIcon = true; iconOffX = e.offsetX; iconOffY = e.offsetY; icon.style.cursor='grabbing'; });
+document.addEventListener('mouseup', ()=> { draggingIcon = false; icon.style.cursor='grab'; });
 document.addEventListener('mousemove', e => {
-  if (draggingIcon) { icon.style.left = e.pageX - offsetX + 'px'; icon.style.top = e.pageY - offsetY + 'px'; }
+  if(!draggingIcon) return;
+  icon.style.left = (e.pageX - iconOffX) + 'px';
+  icon.style.top  = (e.pageY - iconOffY) + 'px';
 });
 
-// Show/Hide
-icon.addEventListener('click', () => {
+// Open Kakao
+icon.addEventListener('click', ()=>{
   const isHidden = window.getComputedStyle(kakaoWindow).display === 'none';
-  if (isHidden) {
+  if(isHidden){
     kakaoWindow.style.display = 'block';
     bringToFront(kakaoWindow);
     typingArea.value = savedText;
@@ -363,60 +141,54 @@ icon.addEventListener('click', () => {
   }
 });
 
-// Drag window
+// Drag kakao window by top bar (KEEP this)
 let draggingWindow = false, winOffsetX = 0, winOffsetY = 0;
-kakaoTopBar.addEventListener('mousedown', e => {
+kakaoTopBar.addEventListener('mousedown', e=>{
   draggingWindow = true;
   bringToFront(kakaoWindow);
   const rect = kakaoWindow.getBoundingClientRect();
   winOffsetX = e.clientX - rect.left;
   winOffsetY = e.clientY - rect.top;
+  kakaoTopBar.style.cursor = 'grabbing';
 });
-document.addEventListener('mouseup', () => draggingWindow = false);
-document.addEventListener('mousemove', e => {
-  if (draggingWindow) {
-    kakaoWindow.style.left = e.clientX - winOffsetX + 'px';
-    kakaoWindow.style.top = e.clientY - winOffsetY + 'px';
-  }
+document.addEventListener('mouseup', ()=>{ draggingWindow = false; kakaoTopBar.style.cursor='grab'; });
+document.addEventListener('mousemove', e=>{
+  if(!draggingWindow) return;
+  kakaoWindow.style.left = (e.clientX - winOffsetX) + 'px';
+  kakaoWindow.style.top  = (e.clientY - winOffsetY) + 'px';
 });
 
-closeBtn.addEventListener('click', () => {
+// Close kakao
+closeBtn.addEventListener('click', ()=>{
   kakaoWindow.style.display = 'none';
   savedText = typingArea.value;
   typingArea.value = "";
 });
 
-// Send button logic
-typingArea.addEventListener('input', () => {
-  if (typingArea.value.trim().length > 0) {
-    sendButton.classList.add('active');
-    sendButton.disabled = false;
-  } else {
-    sendButton.classList.remove('active');
-    sendButton.disabled = true;
-  }
+// Send enable
+typingArea.addEventListener('input', ()=>{
+  if(typingArea.value.trim().length > 0){ sendButton.classList.add('active'); sendButton.disabled = false; }
+  else { sendButton.classList.remove('active'); sendButton.disabled = true; }
 });
 
-sendButton.addEventListener('click', () => {
+// Send message
+sendButton.addEventListener('click', ()=>{
   const text = typingArea.value.trim();
-  if (text.length === 0) return;
-  messages.push({from: "user", text});
+  if(!text) return;
+  messages.push({from:"user", text});
   typingArea.value = "";
-  sendButton.classList.remove('active');
-  sendButton.disabled = true;
+  sendButton.classList.remove('active'); sendButton.disabled = true;
   renderMessages();
   const reply = getBotReply(text);
-  setTimeout(() => {
-    messages.push({from: "bot", text: reply});
-    renderMessages();
-  }, 500);
+  setTimeout(()=>{ messages.push({from:"bot", text:reply}); renderMessages(); }, 500);
 });
 
-function renderMessages() {
+function renderMessages(){
   messageContainer.innerHTML = "";
-  messages.forEach(msg => {
+  messages.forEach(msg=>{
     const msgDiv = document.createElement('div');
-    msgDiv.classList.add('messageContainer', msg.from === "user" ? 'userMsg' : 'botMsg');
+    msgDiv.classList.add('messageContainer');
+    msgDiv.classList.add(msg.from === "user" ? 'userMsg' : 'botMsg');
     const bubble = document.createElement('div');
     bubble.classList.add('message');
     bubble.textContent = msg.text;
@@ -426,6 +198,18 @@ function renderMessages() {
   messageContainer.scrollTop = messageContainer.scrollHeight;
 }
 
+// focus typing area when clicking lower region (keep original)
+kakaoWindow.addEventListener('click', e=>{
+  const rect = kakaoWindow.getBoundingClientRect();
+  const clickY = e.clientY - rect.top;
+  const clickFromBottom = rect.height - clickY;
+  if(clickFromBottom < 110) {
+    typingArea.focus();
+    bringToFront(kakaoWindow);
+  }
+});
+
+/* Bot replies (kept same) */
 const botResponses = [
   { pattern: "hello", reply: "Heyyyyy" },
   { pattern: "hi", reply: "hiiiiiii! " },
@@ -437,24 +221,152 @@ const botResponses = [
   { pattern: "sad", reply: "Oh nooo" },
   { pattern: "angry", reply: "..." },
 ];
-const fuse = new Fuse(botResponses, { keys: ["pattern"], threshold: 0.4, includeScore: true });
-function getBotReply(text) {
-  const result = fuse.search(text.toLowerCase());
-  if (result.length > 0 && result[0].score < 0.4) return result[0].item.reply;
-  const arr = [
-    "sorry, i just woke up. im sooo tired today",
-    "i fell asleep again. wyd?",
-    "Really? im soooo hungry tho",
-    "do you still love me?",
-    "sorry, fell asleep"
-  ];
-  return arr[Math.floor(Math.random() * arr.length)];
+const fuse = new Fuse(botResponses, { keys:["pattern"], threshold:0.4, includeScore:true });
+function getBotReply(text){ const r = fuse.search(text.toLowerCase()); if(r.length>0 && r[0].score<0.4) return r[0].item.reply; const arr=["sorry, i just woke up. im sooo tired today","i fell asleep again. wyd?","Really? im soooo hungry tho","do you still love me?","sorry, fell asleep"]; return arr[Math.floor(Math.random()*arr.length)]; }
+
+/* ---------- NOTE (file) window: movable, resizable, highlights, caret at end ---------- */
+const noteIcon = document.getElementById('noteIcon');
+const noteWindow = document.getElementById('noteWindow');
+const noteTopBar = document.getElementById('noteTopBar');
+const noteCloseBtn = document.getElementById('noteCloseBtn');
+const noteContent = document.getElementById('noteContent');
+const noteResize = noteWindow.querySelector('.resize-handle');
+
+const targetText = "INSERT TEXT HERE";
+
+/* make note icon draggable (like kakao icon) */
+let draggingNoteIcon = false, noteIconOffX = 0, noteIconOffY = 0;
+noteIcon.addEventListener('mousedown', e=>{ draggingNoteIcon=true; noteIconOffX=e.offsetX; noteIconOffY=e.offsetY; noteIcon.style.cursor='grabbing'; });
+document.addEventListener('mouseup', ()=>{ draggingNoteIcon=false; noteIcon.style.cursor='grab'; });
+document.addEventListener('mousemove', e=>{ if(!draggingNoteIcon) return; noteIcon.style.left=(e.pageX-noteIconOffX)+'px'; noteIcon.style.top=(e.pageY-noteIconOffY)+'px'; });
+
+/* open note window on icon click */
+noteIcon.addEventListener('click', ()=>{ noteWindow.style.display='block'; bringToFront(noteWindow); placeCaretAtEnd(noteContent); });
+
+/* note top bar drag -> move window */
+let draggingNoteWindow=false, noteOffX=0, noteOffY=0;
+noteTopBar.addEventListener('mousedown', e=>{
+  draggingNoteWindow=true;
+  const rect = noteWindow.getBoundingClientRect();
+  noteOffX = e.clientX - rect.left; noteOffY = e.clientY - rect.top;
+  bringToFront(noteWindow);
+  noteTopBar.style.cursor='grabbing';
+});
+document.addEventListener('mouseup', ()=>{ draggingNoteWindow=false; noteTopBar.style.cursor='grab'; });
+document.addEventListener('mousemove', e=>{
+  if(!draggingNoteWindow) return;
+  noteWindow.style.left = (e.clientX - noteOffX) + 'px';
+  noteWindow.style.top  = (e.clientY - noteOffY) + 'px';
+});
+
+/* visible resize handle behavior (only for noteWindow) */
+noteResize.addEventListener('mousedown', e=>{
+  e.preventDefault();
+  bringToFront(noteWindow);
+  const startRect = noteWindow.getBoundingClientRect();
+  const startX = e.clientX, startY = e.clientY;
+  function onMove(ev){
+    const dx = ev.clientX - startX, dy = ev.clientY - startY;
+    const newW = Math.max(260, startRect.width + dx);
+    const newH = Math.max(180, startRect.height + dy);
+    noteWindow.style.width = newW + 'px';
+    noteWindow.style.height = newH + 'px';
+  }
+  function onUp(){ document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); }
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+});
+
+/* note close */
+noteCloseBtn.addEventListener('click', ()=> noteWindow.style.display='none');
+
+/* clicking windows brings them front (so their internals stay top too) */
+[kakaoWindow, noteWindow].forEach(w=>{
+  w.addEventListener('mousedown', ()=> bringToFront(w));
+});
+
+/* highlight logic:
+   - dark green for exact char (correct char and case)
+   - light green if same letter different case
+   - yellow for wrong
+   - both greens fade to transparent after 5s
+   - caret placed at end after update
+*/
+let greenTimers = new WeakMap();
+
+function renderNoteHighlights(rawText){
+  // clear previous timers
+  // build spans char-by-char
+  noteContent.innerHTML = '';
+  for(let i=0;i<rawText.length;i++){
+    const ch = rawText[i];
+    const expected = targetText[i] ?? null;
+    const span = document.createElement('span');
+    span.textContent = ch;
+    if(expected === null){
+      span.className = 'match-wrong';
+    } else if(ch === expected){
+      span.className = 'match-exact';
+      scheduleGreenFade(span);
+    } else if(ch.toLowerCase() === expected.toLowerCase()){
+      span.className = 'match-case';
+      scheduleGreenFade(span);
+    } else {
+      span.className = 'match-wrong';
+    }
+    noteContent.appendChild(span);
+  }
 }
 
-// Clicking brings window to front
-[kakaoWindow, noteWindow].forEach(w => {
-  w.addEventListener("mousedown", () => bringToFront(w));
+function scheduleGreenFade(span){
+  // clear old timer if any
+  if(greenTimers.has(span) && greenTimers.get(span)) {
+    clearTimeout(greenTimers.get(span));
+  }
+  // after 5s, remove highlight classes (fade to plain)
+  const t = setTimeout(()=>{
+    span.classList.remove('match-exact','match-case');
+    span.style.background = 'transparent';
+    greenTimers.delete(span);
+  }, 5000);
+  greenTimers.set(span, t);
+}
+
+/* ensure caret at end */
+function placeCaretAtEnd(el){
+  el.focus();
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  range.collapse(false);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+
+/* keep plain-text typing behavior while using contenteditable:
+   We capture 'input' and rebuild spans, then move caret to end.
+*/
+noteContent.addEventListener('input', (e)=>{
+  // get plain text (preserve newlines)
+  const text = noteContent.innerText.replace(/\uFEFF/g,''); // remove zero-width if any
+  renderNoteHighlights(text);
+  placeCaretAtEnd(noteContent);
 });
+
+/* keep Enter/Tab behavior nicer */
+noteContent.addEventListener('keydown', (e)=>{
+  if(e.key === 'Tab'){
+    e.preventDefault();
+    // insert tab at caret (we always place caret at end anyway, so append)
+    const selText = noteContent.innerText + '\t';
+    renderNoteHighlights(selText);
+    placeCaretAtEnd(noteContent);
+  }
+});
+
+/* Initialize empty */
+renderNoteHighlights('');
+placeCaretAtEnd(noteContent);
 </script>
 </body>
 </html>
