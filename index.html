@@ -232,7 +232,31 @@ const noteCloseBtn = document.getElementById('noteCloseBtn');
 const noteContent = document.getElementById('noteContent');
 const noteResize = noteWindow.querySelector('.resize-handle');
 
-const targetText = "INSERT TEXT HERE";
+const targetText = `Chapter 151: Demonic nature
+“What?” Gu Yue Yao Le was shocked when she heard this.
+Fang Yuan had already struck at lightning speed, his hand chopping her
+neck! She fainted immediately.
+The young girl fell down helplessly, and Fang Yuan’s hand quickly moved,
+holding her by the waist. Next, he activated the Stealth Scale Gu, and their
+bodies vanished on the spot.
+When Gu Yue Yao Le woke up in a sleepy state, she found herself in a dark
+mountain cave.
+She shrugged her head, trying to stand up subconsciously.
+But she soon found out that her arms were tied behind her back, the rope
+looped around her neck; she was tied tightly on a large rock.
+All the Gu worms on her body had been plundered away by Fang Yuan,
+refined and turned into his.
+She was merely a fifteen-year-old young girl — with that frail body, how
+could she break free from that thick ropes wrapped a few times around the
+rock, even tied with knots?
+Being trapped in this remote and unfamiliar place, the young girl started to
+feel frightened.
+She thought about the moment before she had fainted; even the most naive
+person would also know that Fang Yuan was going to do something bad to
+her.`;
+
+renderNoteHighlights(targetText);
+placeCaretAtEnd(noteContent);
 
 /* make note icon draggable (like kakao icon) */
 let draggingNoteIcon = false, noteIconOffX = 0, noteIconOffY = 0;
