@@ -194,6 +194,20 @@ function escapeHtml(s){
   return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
           .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
 }
+// ===== Kakao Window Behavior =====
+const icon = document.getElementById('icon');
+const kakaoWindow = document.getElementById('kakaoWindow');
+const closeBtn = document.getElementById('closeBtn');
+
+// open window on icon click
+icon.addEventListener('click', () => {
+  kakaoWindow.style.display = 'block';
+});
+
+// close window on close button click
+closeBtn.addEventListener('click', () => {
+  kakaoWindow.style.display = 'none';
+});
 
 /* ---------------------------
    Basic draggable icons
