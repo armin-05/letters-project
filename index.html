@@ -1,182 +1,202 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Mini Desktop OS — Notepad Upgrade</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KakaoTalk + Notepad Desktop</title>
 
 <style>
-  :root{
+  :root {
     --bg-black:#000;
-    --note-bg:#e6e6e6; /* main window grey */
-    --note-top:#9a9a9a; /* darker top bar */
-    --dark-green:#1e7f34; /* exact-match */
-    --light-green:#9cff8a; /* case-diff match */
+    --note-bg:#e6e6e6;
+    --note-top:#9a9a9a;
+    --dark-green:#1e7f34;
+    --light-green:#9cff8a;
     --wrong-yellow:#fff666;
-    --window-min-w:280px;
-    --window-min-h:200px;
+    --fade-time:5s;
   }
 
-  html,body{height:100%;margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg-black);overflow:hidden;}
-
-  /* ---------- kakao icon (original) ---------- */
-  #icon{
-    position:absolute; top:60px; left:60px;
-    width:70px; height:80px; cursor:grab;
+  html, body {
+    margin:0; padding:0; height:100%;
+    background:var(--bg-black);
+    font-family:Arial, Helvetica, sans-serif;
+    overflow:hidden;
   }
 
-  /* ---------- note icon ---------- */
-  #noteIcon{
-    position:absolute; top:60px; left:160px;
-    width:70px; height:80px; cursor:grab;
-  }
-
-  /* ---------- generic window base ---------- */
-  .appWindow{
+  /* --- Kakao icon --- */
+  #icon {
     position:absolute;
+    top:60px; left:60px;
+    width:70px; height:80px;
+    cursor:grab;
+  }
+
+  /* --- Note icon --- */
+  #noteIcon {
+    position:absolute;
+    top:60px; left:160px;
+    width:70px; height:80px;
+    cursor:grab;
+  }
+
+  /* --- Kakao Window --- */
+  #kakaoWindow {
+    position:absolute;
+    top:160px; left:160px;
+    width:420px; height:340px;
     display:none;
     border-radius:8px;
-    box-shadow:0 6px 18px rgba(0,0,0,0.6);
+    overflow:hidden;
+    background:transparent;
+  }
+
+  #kakaoTopBar {
+    height:40px;
+    width:100%;
+    background:transparent;
+    cursor:grab;
+  }
+
+  #kakaoImage {
+    display:block;
+    width:100%;
+    height:auto;
+  }
+
+  #messageContainer {
+    position:absolute;
+    top:115px; left:10px; right:10px; bottom:147px;
+    overflow:auto;
+  }
+
+  .messageContainer { display:flex; margin-bottom:4px; }
+  .message {
+    display:inline-block;
+    padding:8px 12px;
+    border-radius:12px;
+    margin:4px 0;
+    max-width:70%;
+    word-wrap:break-word;
+    font-size:14px;
+  }
+  .userMsg { justify-content:flex-end; }
+  .userMsg .message { background:#ffeb00; }
+  .botMsg { justify-content:flex-start; }
+  .botMsg .message { background:#ececec; }
+
+  #typingArea {
+    position:absolute;
+    left:10px; bottom:65px;
+    width:calc(100% - 90px);
+    height:70px;
+    font-size:15px;
+    background:transparent;
+    border:none;
+    outline:none;
+    resize:none;
+    color:black;
+    z-index:15;
+  }
+
+  #sendButton {
+    position:absolute;
+    right:15px; bottom:16px;
+    width:60px; height:30px;
+    font-weight:bold;
+    border:none; border-radius:4px;
+    background-color:#c0c0c0;
+    cursor:not-allowed;
+  }
+  #sendButton.active { background-color:#ffeb00; cursor:pointer; }
+
+  /* --- Note Window --- */
+  #noteWindow {
+    position:absolute;
+    top:140px; left:280px;
+    width:520px; height:420px;
+    display:none;
+    background:var(--note-bg);
+    border-radius:8px;
+    box-shadow:0 6px 18px rgba(0,0,0,0.5);
     overflow:hidden;
     user-select:none;
-    min-width:var(--window-min-w);
-    min-height:var(--window-min-h);
-    background:white;
   }
 
-  /* ---------- kakao window (kept minimal) ---------- */
-  #kakaoWindow{ top:150px; left:150px; width:420px; height:340px; }
-  #kakaoTopBar{ height:40px; background:transparent; cursor:grab; }
-  #kakaoImage{ display:block; max-width:100%; max-height:100%; }
-
-  /* ---------- NOTE Window Design ---------- */
-  #noteWindow{
-    top:140px; left:260px;
-    width:520px;      /* bigger default width */
-    height:420px;     /* bigger default height */
-    background:var(--note-bg);
-  }
-
-  /* top bar darker grey */
-  #noteTopBar{
+  #noteTopBar {
     height:42px;
-    width:100%;
     background:var(--note-top);
-    cursor:grab;
     display:flex;
     align-items:center;
     justify-content:space-between;
     padding:0 10px;
-    box-sizing:border-box;
+    cursor:grab;
   }
 
-  #noteTitle{
-    color:#fff; font-weight:600; font-size:14px;
-    pointer-events:none;
+  #noteTitle { color:#fff; font-weight:bold; font-size:14px; }
+
+  #noteCloseBtn {
+    width:26px; height:26px;
+    border:none;
+    border-radius:50%;
+    background:#d94c4c;
+    cursor:pointer;
   }
 
-  #noteCloseBtn{
-    width:26px; height:26px; border-radius:50%; border:none; background:#d94c4c; cursor:pointer;
-  }
-
-  /* highlight output area (the "visual" text) */
-  #highlightOutput{
+  #noteEditor {
     position:absolute;
-    top:54px; left:12px; right:12px;
-    bottom:90px;
-    padding:8px;
+    top:42px; left:0; right:0; bottom:0;
+    padding:10px;
     box-sizing:border-box;
-    font-family:monospace;
-    font-size:16px;
-    line-height:1.25;
-    white-space:pre-wrap;
     overflow:auto;
-    background:transparent;
-    border-radius:6px;
-    color:#000;
-  }
-
-  /* the actual typing area */
-  #noteTypingArea{
-    position:absolute;
-    left:12px; right:12px; bottom:12px;
-    height:66px;
-    box-sizing:border-box;
-    resize:none;
+    outline:none;
     font-family:monospace;
     font-size:16px;
-    padding:8px;
-    border-radius:6px;
-    border:1px solid rgba(0,0,0,0.12);
-    outline:none;
-    background:rgba(255,255,255,0.9);
-    color:#000;
+    line-height:1.3;
+    white-space:pre-wrap;
+    word-wrap:break-word;
   }
 
-  /* Resizer handles */
-  .resizer{
+  /* --- Resizers --- */
+  .resizer {
     position:absolute;
     background:transparent;
-    z-index:40;
+    z-index:5;
   }
-  .resizer.right{ top:8px; right:0; bottom:8px; width:8px; cursor:e-resize; }
-  .resizer.bottom{ left:8px; right:8px; bottom:0; height:8px; cursor:s-resize; }
-  .resizer.br{ right:0; bottom:0; width:14px; height:14px; cursor:se-resize; }
-  .resizer.bl{ left:0; bottom:0; width:14px; height:14px; cursor:sw-resize; }
+  .resizer.right { top:6px; right:0; bottom:6px; width:8px; cursor:e-resize; }
+  .resizer.bottom { left:6px; right:6px; bottom:0; height:8px; cursor:s-resize; }
+  .resizer.br { right:0; bottom:0; width:14px; height:14px; cursor:se-resize; }
+  .resizer.bl { left:0; bottom:0; width:14px; height:14px; cursor:sw-resize; }
 
-  /* small visual guide for handles (optional) */
-  .resizer:after{
-    content:"";
-    position:absolute;
-    right:3px; bottom:3px;
-    width:6px; height:6px;
-    background:rgba(0,0,0,0.12);
-    border-radius:2px;
+  /* highlight transitions */
+  .fade-highlight {
+    transition: background-color 0.3s ease;
   }
-
-  /* messages styling (kakao messages) — untouched */
-  #messageContainer{ position:absolute; top:115px; left:10px; right:10px; bottom:147px; overflow:auto; }
-  .message{ display:inline-block; padding:8px 12px; border-radius:12px; margin:4px 0; max-width:70%; word-wrap:break-word; font-size:14px; }
-  .messageContainer{ display:flex; margin-bottom:4px; }
-  .userMsg{ justify-content:flex-end; }
-  .userMsg .message{ background-color:#ffeb00; color:#000; }
-  .botMsg{ justify-content:flex-start; }
-  .botMsg .message{ background-color:#ececec; color:#000; }
-
-  /* small selection prevention for the whole document except inputs */
-  *{ -webkit-user-select: none; -moz-user-select: none; -ms-user-select:none; user-select:none; }
-  input, textarea{ user-select:text; -webkit-user-select:text; }
-
 </style>
 </head>
 <body>
 
-<!-- Kakao icon (placeholder - keep your existing filenames) -->
-<img id="icon" src="Screenshot 2025-10-15 144240.png" alt="kakao">
+<!-- Kakao icon -->
+<img id="icon" src="Screenshot 2025-10-15 144240.png" alt="Kakao">
 
-<!-- Note icon (point to the notepad image you have) -->
-<img id="noteIcon" src="notepad.png" alt="notepad">
+<!-- Note icon -->
+<img id="noteIcon" src="notepad.png" alt="Note">
 
-<!-- Kakao window (kept but not modified for this iteration) -->
-<div id="kakaoWindow" class="appWindow">
+<!-- Kakao window -->
+<div id="kakaoWindow">
   <div id="kakaoTopBar"></div>
-  <button id="closeBtn" title="close"></button>
-  <img id="kakaoImage" src="Screenshot 2025-10-15 144717.png" alt="kakao image">
+  <img id="kakaoImage" src="Screenshot 2025-10-15 144717.png" alt="Kakao">
   <div id="messageContainer"></div>
-  <textarea id="typingArea" placeholder=""></textarea>
+  <textarea id="typingArea" spellcheck="false"></textarea>
   <button id="sendButton">Send</button>
 </div>
 
-<!-- NOTE Window -->
-<div id="noteWindow" class="appWindow" role="application" aria-label="Note app">
+<!-- Note window -->
+<div id="noteWindow">
   <div id="noteTopBar">
     <div id="noteTitle">Notepad</div>
-    <button id="noteCloseBtn" aria-label="Close note"></button>
+    <button id="noteCloseBtn"></button>
   </div>
-
-  <div id="highlightOutput" aria-hidden="true"></div>
-
-  <textarea id="noteTypingArea" placeholder="Type here..." spellcheck="false" aria-label="Type here"></textarea>
+  <div id="noteEditor" contenteditable="true"></div>
 
   <!-- Resizers -->
   <div class="resizer right"></div>
@@ -186,236 +206,131 @@
 </div>
 
 <script>
-/* ---------------------------
-   Utilities
-   --------------------------- */
-function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
-function escapeHtml(s){
-  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
-          .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
-}
-// ===== Kakao Window Behavior =====
-const icon = document.getElementById('icon');
-const kakaoWindow = document.getElementById('kakaoWindow');
-const closeBtn = document.getElementById('closeBtn');
-
-// open window on icon click
-icon.addEventListener('click', () => {
-  kakaoWindow.style.display = 'block';
-});
-
-// close window on close button click
-closeBtn.addEventListener('click', () => {
-  kakaoWindow.style.display = 'none';
-});
-
-/* ---------------------------
-   Basic draggable icons
-   --------------------------- */
-function makeDraggableIcon(imgEl){
-  let dragging=false, offX=0, offY=0;
-  imgEl.addEventListener('mousedown', e=>{
-    dragging=true;
-    offX = e.offsetX;
-    offY = e.offsetY;
-    imgEl.style.cursor = 'grabbing';
+/* ---------- ICON DRAG ---------- */
+function makeDraggableIcon(el) {
+  let drag=false, offX=0, offY=0;
+  el.addEventListener('mousedown', e => {
+    drag=true; offX=e.offsetX; offY=e.offsetY; el.style.cursor='grabbing';
   });
-  document.addEventListener('mouseup', ()=>{ dragging=false; imgEl.style.cursor='grab'; });
+  document.addEventListener('mouseup', ()=>{drag=false; el.style.cursor='grab';});
   document.addEventListener('mousemove', e=>{
-    if(!dragging) return;
-    imgEl.style.left = (e.pageX - offX) + 'px';
-    imgEl.style.top  = (e.pageY - offY) + 'px';
+    if(!drag) return;
+    el.style.left=(e.pageX-offX)+'px';
+    el.style.top=(e.pageY-offY)+'px';
   });
 }
 makeDraggableIcon(document.getElementById('icon'));
 makeDraggableIcon(document.getElementById('noteIcon'));
 
-/* ---------------------------
-   NOTE window behavior
-   --------------------------- */
+/* ---------- KAKAO WINDOW ---------- */
+const kakaoIcon = document.getElementById('icon');
+const kakaoWindow = document.getElementById('kakaoWindow');
+kakaoIcon.addEventListener('click',()=> kakaoWindow.style.display='block');
+
+/* ---------- NOTE WINDOW ---------- */
+const noteIcon = document.getElementById('noteIcon');
 const noteWindow = document.getElementById('noteWindow');
 const noteTopBar = document.getElementById('noteTopBar');
 const noteCloseBtn = document.getElementById('noteCloseBtn');
-const noteIcon = document.getElementById('noteIcon');
-const noteTypingArea = document.getElementById('noteTypingArea');
-const highlightOutput = document.getElementById('highlightOutput');
-const resizerRight = noteWindow.querySelector('.resizer.right');
-const resizerBottom = noteWindow.querySelector('.resizer.bottom');
-const resizerBR = noteWindow.querySelector('.resizer.br');
-const resizerBL = noteWindow.querySelector('.resizer.bl');
+const noteEditor = document.getElementById('noteEditor');
 
-const MIN_W = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--window-min-w')) || 280;
-const MIN_H = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--window-min-h')) || 200;
-
-let draggingWindow=false, dragOffsetX=0, dragOffsetY=0;
-
-// show window when icon clicked
-noteIcon.addEventListener('click', ()=>{
-  noteWindow.style.display = 'block';
-  noteTypingArea.focus();
-  updateHighlight();
+noteIcon.addEventListener('click',()=> {
+  noteWindow.style.display='block';
+  noteEditor.focus();
 });
 
-// top bar drag (move window)
+noteCloseBtn.addEventListener('click',()=> noteWindow.style.display='none');
+
+/* --- Move window --- */
+let dragW=false, offX=0, offY=0;
 noteTopBar.addEventListener('mousedown', e=>{
-  draggingWindow = true;
-  const r = noteWindow.getBoundingClientRect();
-  dragOffsetX = e.clientX - r.left;
-  dragOffsetY = e.clientY - r.top;
-  document.body.style.cursor = 'grabbing';
+  dragW=true;
+  const r=noteWindow.getBoundingClientRect();
+  offX=e.clientX - r.left;
+  offY=e.clientY - r.top;
 });
-document.addEventListener('mouseup', ()=>{ draggingWindow=false; document.body.style.cursor='default'; });
+document.addEventListener('mouseup', ()=>dragW=false);
 document.addEventListener('mousemove', e=>{
-  if(!draggingWindow) return;
-  noteWindow.style.left = (e.clientX - dragOffsetX) + 'px';
-  noteWindow.style.top  = (e.clientY - dragOffsetY) + 'px';
+  if(!dragW) return;
+  noteWindow.style.left=(e.clientX-offX)+'px';
+  noteWindow.style.top=(e.clientY-offY)+'px';
 });
 
-/* close button */
-noteCloseBtn.addEventListener('click', ()=> {
-  noteWindow.style.display = 'none';
-});
-
-/* ---------------------------
-   Resizing logic
-   - right: only width
-   - bottom: only height
-   - br: width + height
-   - bl: change left & width + height
-   --------------------------- */
-
-function startResize(e, mode){
+/* --- Resizing --- */
+function resizeInit(e,mode){
   e.preventDefault();
-  const startRect = noteWindow.getBoundingClientRect();
-  const startX = e.clientX;
-  const startY = e.clientY;
-
-  function onMove(ev){
-    let dx = ev.clientX - startX;
-    let dy = ev.clientY - startY;
-
-    let newWidth = startRect.width;
-    let newHeight = startRect.height;
-    let newLeft = startRect.left;
-    if(mode === 'right'){
-      newWidth = clamp(startRect.width + dx, MIN_W, window.innerWidth - startRect.left - 8);
-    } else if(mode === 'bottom'){
-      newHeight = clamp(startRect.height + dy, MIN_H, window.innerHeight - startRect.top - 8);
-    } else if(mode === 'br'){
-      newWidth = clamp(startRect.width + dx, MIN_W, window.innerWidth - startRect.left - 8);
-      newHeight = clamp(startRect.height + dy, MIN_H, window.innerHeight - startRect.top - 8);
-    } else if(mode === 'bl'){
-      // bottom-left: move left and change width + height
-      newWidth = clamp(startRect.width - dx, MIN_W, startRect.left + startRect.width - 8);
-      newLeft  = startRect.left + dx;
-      // constrain left so window remains inside viewport
-      if(newLeft < 0){ newLeft = 0; newWidth = startRect.right - 8; }
-      newHeight = clamp(startRect.height + dy, MIN_H, window.innerHeight - startRect.top - 8);
-    }
-
-    // apply
-    noteWindow.style.width = newWidth + 'px';
-    noteWindow.style.height = newHeight + 'px';
-    noteWindow.style.left = newLeft + 'px';
-    // ensure top remains the same for these resizes
+  const startR=noteWindow.getBoundingClientRect();
+  const sx=e.clientX, sy=e.clientY;
+  function move(ev){
+    let dx=ev.clientX-sx, dy=ev.clientY-sy;
+    let w=startR.width, h=startR.height, left=startR.left;
+    if(mode==='right'||mode==='br') w=Math.max(280,startR.width+dx);
+    if(mode==='bottom'||mode==='br') h=Math.max(200,startR.height+dy);
+    if(mode==='bl'){ w=Math.max(280,startR.width-dx); left=startR.left+dx; h=Math.max(200,startR.height+dy);}
+    noteWindow.style.width=w+'px';
+    noteWindow.style.height=h+'px';
+    noteWindow.style.left=left+'px';
   }
-
-  function onUp(){ document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); }
-  document.addEventListener('mousemove', onMove);
-  document.addEventListener('mouseup', onUp);
+  function up(){document.removeEventListener('mousemove',move);document.removeEventListener('mouseup',up);}
+  document.addEventListener('mousemove',move);
+  document.addEventListener('mouseup',up);
 }
+noteWindow.querySelector('.resizer.right').onmousedown=e=>resizeInit(e,'right');
+noteWindow.querySelector('.resizer.bottom').onmousedown=e=>resizeInit(e,'bottom');
+noteWindow.querySelector('.resizer.br').onmousedown=e=>resizeInit(e,'br');
+noteWindow.querySelector('.resizer.bl').onmousedown=e=>resizeInit(e,'bl');
 
-resizerRight.addEventListener('mousedown', (e)=> startResize(e,'right'));
-resizerBottom.addEventListener('mousedown', (e)=> startResize(e,'bottom'));
-resizerBR.addEventListener('mousedown', (e)=> startResize(e,'br'));
-resizerBL.addEventListener('mousedown', (e)=> startResize(e,'bl'));
+/* ---------- Highlight Logic ---------- */
+const targetText = "INSERT TEXT HERE";
 
-/* ---------------------------
-   Highlight logic with case-insensitive rules
-   --------------------------- */
-
-const targetText = "INSERT TEXT HERE"; // change to any text you want
-
-// escape but preserve spaces and show them visibly? We'll render as usual.
-function colorize(typed){
-  // go char by char
-  let out = '';
-  for(let i=0;i<typed.length;i++){
-    const ch = typed[i];
-    const expected = targetText[i] ?? null;
-
-    // safe printable HTML
-    const safeCh = escapeHtml(ch);
-
-    if(expected === null){
-      // typed extra beyond expected length -> treat as wrong (yellow)
-      out += `<span style="background:${getVar('--wrong-yellow')};padding:0 1px">${safeCh}</span>`;
-      continue;
-    }
-
-    if(ch === expected){
-      // exact match & exact case => dark green
-      out += `<span style="background:${getVar('--dark-green')}; color:#fff; padding:0 1px">${safeCh}</span>`;
-    } else if(ch.toLowerCase() === expected.toLowerCase()){
-      // same letter but different case => light green (less saturated)
-      out += `<span style="background:${getVar('--light-green')}; padding:0 1px">${safeCh}</span>`;
+function highlightText(node){
+  const text = node.innerText;
+  node.innerHTML = '';
+  for(let i=0;i<text.length;i++){
+    const ch = text[i];
+    const exp = targetText[i] || '';
+    const span = document.createElement('span');
+    span.textContent = ch;
+    span.classList.add('fade-highlight');
+    if(!exp){
+      span.style.background= getComputedStyle(document.documentElement).getPropertyValue('--wrong-yellow');
+    } else if(ch === exp){
+      span.style.background = getComputedStyle(document.documentElement).getPropertyValue('--dark-green');
+      span.style.color = "#fff";
+      fadeOut(span);
+    } else if(ch.toLowerCase() === exp.toLowerCase()){
+      span.style.background = getComputedStyle(document.documentElement).getPropertyValue('--light-green');
+      fadeOut(span);
     } else {
-      // mismatch
-      out += `<span style="background:${getVar('--wrong-yellow')}; padding:0 1px">${safeCh}</span>`;
+      span.style.background = getComputedStyle(document.documentElement).getPropertyValue('--wrong-yellow');
     }
+    node.appendChild(span);
   }
-  return out;
 }
 
-// helper to read CSS variable values from :root and return actual hex string
-function getVar(name){
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || name;
+function fadeOut(el){
+  setTimeout(()=>{
+    el.style.transition = "background-color 1s ease, color 1s ease";
+    el.style.background = "transparent";
+    el.style.color = "#000";
+  }, 5000);
 }
 
-function updateHighlight(){
-  const typed = noteTypingArea.value;
-  const safe = escapeHtml(typed);
-  // produce colored markup
-  highlightOutput.innerHTML = colorize(typed);
-
-  // scroll highlightOutput to bottom so user sees latest as they type
-  highlightOutput.scrollTop = highlightOutput.scrollHeight;
-}
-
-// update highlight whenever typing
-noteTypingArea.addEventListener('input', updateHighlight);
-
-// initialize with empty content
-updateHighlight();
-
-/* allow Enter/tab etc naturally inside textarea */
-noteTypingArea.addEventListener('keydown', function(e){
-  // allow tab insertion
-  if(e.key === 'Tab'){
-    e.preventDefault();
-    const start = this.selectionStart;
-    const end = this.selectionEnd;
-    const value = this.value;
-    this.value = value.substring(0,start) + '\t' + value.substring(end);
-    this.selectionStart = this.selectionEnd = start + 1;
-    updateHighlight();
-  }
-});
-
-/* Keep focus on textarea if click anywhere inside the window */
-noteWindow.addEventListener('mousedown', function(e){
-  if(e.target === noteTypingArea) return;
-  // small heuristic: if clicked inside window and not dragging handle, focus the textarea
-  setTimeout(()=> noteTypingArea.focus(), 0);
-});
-
-/* resize on window resize to keep window inside viewport */
-window.addEventListener('resize', ()=> {
-  const r = noteWindow.getBoundingClientRect();
-  const maxLeft = window.innerWidth - 40;
-  const maxTop = window.innerHeight - 40;
-  if(r.left > maxLeft) noteWindow.style.left = (maxLeft) + 'px';
-  if(r.top  > maxTop) noteWindow.style.top = (maxTop) + 'px';
+noteEditor.addEventListener('input', ()=>{
+  const sel = window.getSelection();
+  const range = sel.getRangeAt(0);
+  const pos = range.startOffset;
+  highlightText(noteEditor);
+  try {
+    const child = noteEditor.childNodes[pos] || noteEditor.lastChild;
+    if(child) {
+      const newRange = document.createRange();
+      newRange.setStart(child,1);
+      newRange.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(newRange);
+    }
+  } catch(e){}
 });
 
 </script>
