@@ -156,6 +156,12 @@ sendButton.addEventListener('click', () => {
     messages.push({from: "bot", text: getBotReply(text)});
     renderMessages();
   }, 500);
+}
+typingArea.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
 });
 
 function renderMessages() {
