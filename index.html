@@ -12,7 +12,6 @@
     overflow: hidden;
   }
 
-  /* --- ICONS --- */
   #icon, #fileIcon {
     position: absolute;
     width: 70px;
@@ -22,19 +21,17 @@
   #icon { top: 100px; left: 100px; }
   #fileIcon { top: 100px; left: 200px; }
 
-  /* --- Z-INDEX MANAGEMENT --- */
   .window {
     position: absolute;
     border-radius: 8px;
     overflow: hidden;
   }
 
-  /* --- KAKAO TALK --- */
+  /* KakaoTalk window */
   #kakaoWindow {
     top: 200px;
     left: 200px;
     display: none;
-    cursor: default;
   }
 
   #kakaoTopBar {
@@ -45,7 +42,6 @@
     width: 100%;
     background: transparent;
     cursor: grab;
-    z-index: 10;
   }
 
   #kakaoImage {
@@ -65,8 +61,6 @@
     background: transparent;
     cursor: pointer;
     border: none;
-    outline: none;
-    z-index: 20;
   }
 
   #typingArea {
@@ -82,7 +76,6 @@
     border: none;
     outline: none;
     resize: none;
-    z-index: 15;
   }
 
   #sendButton {
@@ -99,14 +92,9 @@
     border: none;
     border-radius: 4px;
     cursor: not-allowed;
-    z-index: 16;
-    transition: background-color 0.2s ease;
   }
 
-  #sendButton.active {
-    background-color: #ffeb00;
-    cursor: pointer;
-  }
+  #sendButton.active { background-color: #ffeb00; cursor: pointer; }
 
   #messageContainer {
     position: absolute;
@@ -115,31 +103,16 @@
     right: 10px;
     bottom: 147px;
     overflow-y: auto;
-    z-index: 5;
   }
 
-  .message {
-    display: inline-block;
-    padding: 8px 12px;
-    border-radius: 12px;
-    margin: 4px 0;
-    max-width: 70%;
-    word-wrap: break-word;
-    font-family: Arial, sans-serif;
-    font-size: 14px;
-  }
-
-  .messageContainer {
-    display: flex;
-    margin-bottom: 4px;
-  }
-
+  .messageContainer { display: flex; margin-bottom: 4px; }
+  .message { padding: 8px 12px; border-radius: 12px; margin: 4px 0; font-family: Arial; font-size: 14px; max-width: 70%; word-wrap: break-word; }
   .userMsg { justify-content: flex-end; }
-  .userMsg .message { background-color: #ffeb00; color: black; }
+  .userMsg .message { background-color: #ffeb00; }
   .botMsg { justify-content: flex-start; }
-  .botMsg .message { background-color: #ececec; color: black; }
+  .botMsg .message { background-color: #ececec; }
 
-  /* --- FILE APP --- */
+  /* File app */
   #fileWindow {
     display: none;
     top: 150px;
@@ -150,7 +123,6 @@
     border: 2px solid #555;
     resize: both;
     overflow: auto;
-    cursor: default;
   }
 
   #fileTopBar {
@@ -181,7 +153,6 @@
     overflow: auto;
   }
 
-  /* Highlight colors */
   .match-exact { background-color: #00ff00; transition: background-color 0.5s; }
   .match-case { background-color: #7fff7f; transition: background-color 0.5s; }
   .match-wrong { background-color: yellow; }
@@ -199,21 +170,18 @@
 </head>
 <body>
 
-<!-- ICONS -->
-<img id="icon" src="Screenshot 2025-10-15 144240.png" alt="Kakao Icon">
-<img id="fileIcon" src="file_icon.png" alt="File Icon">
+<img id="icon" src="Screenshot 2025-10-15 144240.png">
+<img id="fileIcon" src="file_icon.png">
 
-<!-- KAKAO TALK WINDOW -->
 <div id="kakaoWindow" class="window">
   <div id="kakaoTopBar"></div>
   <button id="closeBtn"></button>
-  <img id="kakaoImage" src="Screenshot 2025-10-15 144717.png" alt="Kakao Window">
+  <img id="kakaoImage" src="Screenshot 2025-10-15 144717.png">
   <div id="messageContainer"></div>
-  <textarea id="typingArea" spellcheck="false"></textarea>
+  <textarea id="typingArea"></textarea>
   <button id="sendButton">Send</button>
 </div>
 
-<!-- FILE WINDOW -->
 <div id="fileWindow" class="window">
   <div id="fileTopBar"></div>
   <div id="fileClose"></div>
@@ -222,143 +190,85 @@
 </div>
 
 <script>
-/* === GLOBAL Z-INDEX MANAGEMENT === */
+/* === BASIC UTILITIES === */
 let highestZ = 10;
-function bringToFront(el) {
-  highestZ++;
-  el.style.zIndex = highestZ;
-}
-
-/* === MOVABLE ICONS === */
-function makeMovable(icon) {
-  let dragging = false, offsetX, offsetY;
-  icon.addEventListener('mousedown', e => {
-    dragging = true;
-    offsetX = e.offsetX;
-    offsetY = e.offsetY;
-  });
-  document.addEventListener('mouseup', () => dragging = false);
-  document.addEventListener('mousemove', e => {
-    if (dragging) {
-      icon.style.left = e.pageX - offsetX + 'px';
-      icon.style.top = e.pageY - offsetY + 'px';
-    }
-  });
+function bringToFront(el){ highestZ++; el.style.zIndex = highestZ; }
+function makeMovable(icon){
+  let drag=false,offX,offY;
+  icon.addEventListener('mousedown',e=>{drag=true;offX=e.offsetX;offY=e.offsetY;});
+  document.addEventListener('mouseup',()=>drag=false);
+  document.addEventListener('mousemove',e=>{if(drag){icon.style.left=e.pageX-offX+'px';icon.style.top=e.pageY-offY+'px';}});
 }
 makeMovable(document.getElementById('icon'));
 makeMovable(document.getElementById('fileIcon'));
 
-/* === KAKAO TALK APP === */
-const kakaoWindow = document.getElementById('kakaoWindow');
-const kakaoTopBar = document.getElementById('kakaoTopBar');
-const icon = document.getElementById('icon');
-const closeBtn = document.getElementById('closeBtn');
-const typingArea = document.getElementById('typingArea');
-const sendButton = document.getElementById('sendButton');
-const messageContainer = document.getElementById('messageContainer');
-let savedText = "", messages = [];
-
-icon.addEventListener('click', () => {
-  kakaoWindow.style.display = 'block';
-  bringToFront(kakaoWindow);
-});
-
-closeBtn.addEventListener('click', () => kakaoWindow.style.display = 'none');
-
-let draggingWindow = false, winOffsetX = 0, winOffsetY = 0;
-kakaoTopBar.addEventListener('mousedown', e => {
-  draggingWindow = true;
-  const rect = kakaoWindow.getBoundingClientRect();
-  winOffsetX = e.clientX - rect.left;
-  winOffsetY = e.clientY - rect.top;
-  bringToFront(kakaoWindow);
-});
-document.addEventListener('mouseup', () => draggingWindow = false);
-document.addEventListener('mousemove', e => {
-  if (draggingWindow) {
-    kakaoWindow.style.left = e.clientX - winOffsetX + 'px';
-    kakaoWindow.style.top = e.clientY - winOffsetY + 'px';
-  }
-});
+/* === KAKAO === */
+const kakaoWindow=document.getElementById('kakaoWindow'),kakaoTopBar=document.getElementById('kakaoTopBar');
+const icon=document.getElementById('icon'),closeBtn=document.getElementById('closeBtn'),typingArea=document.getElementById('typingArea');
+const sendButton=document.getElementById('sendButton'),messageContainer=document.getElementById('messageContainer');
+let draggingWindow=false,offX,offY;let messages=[];
+icon.onclick=()=>{kakaoWindow.style.display='block';bringToFront(kakaoWindow);};
+closeBtn.onclick=()=>{kakaoWindow.style.display='none';};
+kakaoTopBar.onmousedown=e=>{draggingWindow=true;const r=kakaoWindow.getBoundingClientRect();offX=e.clientX-r.left;offY=e.clientY-r.top;bringToFront(kakaoWindow);};
+document.onmouseup=()=>draggingWindow=false;
+document.onmousemove=e=>{if(draggingWindow){kakaoWindow.style.left=e.clientX-offX+'px';kakaoWindow.style.top=e.clientY-offY+'px';}};
 
 /* === FILE APP === */
-const fileWindow = document.getElementById('fileWindow');
-const fileTopBar = document.getElementById('fileTopBar');
-const fileIcon = document.getElementById('fileIcon');
-const noteContent = document.getElementById('noteContent');
-const resizeHandle = document.getElementById('resizeHandle');
-const fileClose = document.getElementById('fileClose');
+const fileWindow=document.getElementById('fileWindow');
+const fileTopBar=document.getElementById('fileTopBar');
+const fileIcon=document.getElementById('fileIcon');
+const noteContent=document.getElementById('noteContent');
+const fileClose=document.getElementById('fileClose');
+const resizeHandle=document.getElementById('resizeHandle');
 
-fileIcon.addEventListener('click', () => {
-  fileWindow.style.display = 'block';
-  bringToFront(fileWindow);
-  renderNoteHighlights(initialVisibleText);
-});
+/* persistent note text */
+const targetText="Chapter 151: Demonic nature “What?” Gu Yue Yao Le was shocked when she heard this.";
+const initialText="Chapter 151: Demonic nature “What?” Gu";
+let savedNote=localStorage.getItem('noteContent')||initialText;
 
-fileClose.addEventListener('click', () => fileWindow.style.display = 'none');
+/* Open/close/move */
+fileIcon.onclick=()=>{fileWindow.style.display='block';bringToFront(fileWindow);renderNoteHighlights(savedNote);};
+fileClose.onclick=()=>{fileWindow.style.display='none';localStorage.setItem('noteContent',savedNote);};
 
-let draggingFile = false, fileOffsetX, fileOffsetY;
-fileTopBar.addEventListener('mousedown', e => {
-  draggingFile = true;
-  const rect = fileWindow.getBoundingClientRect();
-  fileOffsetX = e.clientX - rect.left;
-  fileOffsetY = e.clientY - rect.top;
-  bringToFront(fileWindow);
-});
-document.addEventListener('mouseup', () => draggingFile = false);
-document.addEventListener('mousemove', e => {
-  if (draggingFile) {
-    fileWindow.style.left = e.clientX - fileOffsetX + 'px';
-    fileWindow.style.top = e.clientY - fileOffsetY + 'px';
-  }
-});
+let draggingFile=false,fOffX,fOffY;
+fileTopBar.onmousedown=e=>{draggingFile=true;const r=fileWindow.getBoundingClientRect();fOffX=e.clientX-r.left;fOffY=e.clientY-r.top;bringToFront(fileWindow);};
+document.onmouseup=()=>draggingFile=false;
+document.onmousemove=e=>{if(draggingFile){fileWindow.style.left=e.clientX-fOffX+'px';fileWindow.style.top=e.clientY-fOffY+'px';}};
 
-/* === FILE APP RESIZING === */
-let resizing = false, startX, startY, startWidth, startHeight;
-resizeHandle.addEventListener('mousedown', e => {
-  resizing = true;
-  const rect = fileWindow.getBoundingClientRect();
-  startX = e.clientX;
-  startY = e.clientY;
-  startWidth = rect.width;
-  startHeight = rect.height;
-  e.preventDefault();
-  bringToFront(fileWindow);
-});
-document.addEventListener('mouseup', () => resizing = false);
-document.addEventListener('mousemove', e => {
-  if (resizing) {
-    const newWidth = startWidth + (e.clientX - startX);
-    const newHeight = startHeight + (e.clientY - startY);
-    fileWindow.style.width = newWidth + 'px';
-    fileWindow.style.height = newHeight + 'px';
-  }
-});
+/* resizing */
+let resizing=false,sX,sY,sW,sH;
+resizeHandle.onmousedown=e=>{resizing=true;const r=fileWindow.getBoundingClientRect();sX=e.clientX;sY=e.clientY;sW=r.width;sH=r.height;bringToFront(fileWindow);};
+document.addEventListener('mouseup',()=>resizing=false);
+document.addEventListener('mousemove',e=>{if(resizing){fileWindow.style.width=sW+(e.clientX-sX)+'px';fileWindow.style.height=sH+(e.clientY-sY)+'px';}});
 
-/* === FILE APP CONTENT LOGIC === */
-const targetText = `Chapter 151: Demonic nature
-“What?” Gu Yue Yao Le was shocked when she heard this. Fang Yuan had already struck at lightning speed, his hand chopping her neck!`;
-const initialVisibleText = `Chapter 151: Demonic nature
-“What?” Gu Yue Yao Le was shoc`;
-
-function scheduleGreenFade(span) {
-  setTimeout(() => { if (span.classList.contains('match-exact') || span.classList.contains('match-case')) span.style.backgroundColor = 'transparent'; }, 5000);
+/* highlighting */
+function scheduleGreenFade(span){
+  setTimeout(()=>{if(span.classList.contains('match-exact')||span.classList.contains('match-case'))span.style.backgroundColor='transparent';},5000);
 }
-
-function renderNoteHighlights(rawText) {
-  noteContent.innerHTML = '';
-  for (let i = 0; i < rawText.length; i++) {
-    const ch = rawText[i];
-    const expected = targetText[i] ?? null;
-    const span = document.createElement('span');
-    span.textContent = ch;
-    if (expected === null) span.className = 'match-wrong';
-    else if (ch === expected) { span.className = 'match-exact'; scheduleGreenFade(span); }
-    else if (ch.toLowerCase() === expected.toLowerCase()) { span.className = 'match-case'; scheduleGreenFade(span); }
-    else span.className = 'match-wrong';
+function renderNoteHighlights(text){
+  noteContent.innerHTML='';
+  for(let i=0;i<text.length;i++){
+    const ch=text[i];
+    const expected=targetText[i]||null;
+    const span=document.createElement('span');
+    span.textContent=ch;
+    if(expected===null)span.className='match-wrong';
+    else if(ch===expected){span.className='match-exact';scheduleGreenFade(span);}
+    else if(ch.toLowerCase()===expected.toLowerCase()){span.className='match-case';scheduleGreenFade(span);}
+    else span.className='match-wrong';
     noteContent.appendChild(span);
   }
 }
+
+/* typing logic */
+noteContent.addEventListener('input',()=>{
+  savedNote=noteContent.innerText;
+  localStorage.setItem('noteContent',savedNote);
+  renderNoteHighlights(savedNote);
+});
+
+/* render once */
+renderNoteHighlights(savedNote);
 </script>
 </body>
 </html>
