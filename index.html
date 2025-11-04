@@ -390,7 +390,7 @@ const callState = {
   callType: null
 };
 
-let zIndexCounter = 350;
+let zIndexCounter = 100;
 const greenTimers = new WeakMap();
 const kakaoState = { 
   savedText: "", 
@@ -789,7 +789,7 @@ class NoteWindow {
     this.content.addEventListener('keydown', (e) => this.handleKeydown(e));
     
     // Initialize with first 50 characters and open the window
-    const initialText = TARGET_TEXT.substring(0, 50);
+    const initialText = TARGET_TEXT.substring(0, 150);
     this.renderHighlights(initialText);
     placeCaretAtEnd(this.content);
     this.window.style.display = 'block';
