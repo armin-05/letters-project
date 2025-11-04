@@ -388,7 +388,6 @@ const DEFAULT_REPLIES = [
 const callState = {
   activeCallTimer: null,
   callType: null,
-  ringtoneAudio: null,
   callAudio: null
 };
 
@@ -679,32 +678,24 @@ class CallManager {
   }
 
   setupConfirmWindow(window, type) {
-  const closeBtn = window.querySelector('.call-close-btn');
-  const buttons = window.querySelectorAll('.call-confirm-btn');
-  
-  closeBtn.addEventListener('click', () => {
-    if (callState.ringtoneAudio) {
-      callState.ringtoneAudio.pause();
-      callState.ringtoneAudio.currentTime = 0;
-    }
-    window.style.display = 'none';
-  });
-  
-  buttons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const action = btn.getAttribute('data-action');
-      if (action === 'accept') {
-        this.acceptCall(type);
-      } else {
-        if (callState.ringtoneAudio) {
-          callState.ringtoneAudio.pause();
-          callState.ringtoneAudio.currentTime = 0;
-        }
-        window.style.display = 'none';
-      }
+    const closeBtn = window.querySelector('.call-close-btn');
+    const buttons = window.querySelectorAll('.call-confirm-btn');
+    
+    closeBtn.addEventListener('click', () => {
+      window.style.display = 'none';
     });
-  });
-}
+    
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const action = btn.getAttribute('data-action');
+        if (action === 'accept') {
+          this.acceptCall(type);
+        } else {
+          window.style.display = 'none';
+        }
+      });
+    });
+  }
 
   setupActiveWindow(window, type) {
     const closeBtn = window.querySelector('.call-close-btn');
@@ -754,12 +745,6 @@ class CallManager {
   }
 
   acceptCall(type) {
-  // Stop ringtone if playing
-  if (callState.ringtoneAudio) {
-    callState.ringtoneAudio.pause();
-    callState.ringtoneAudio.currentTime = 0;
-  }
-  
   // Start call audio
   callState.callAudio = new Audio('Kakaotalk Voice Call Ringtone Sound.mp3');
   callState.callAudio.loop = true;
@@ -788,11 +773,9 @@ class CallManager {
   }
 }
 
-
 // ============================================================================
 // NOTE WINDOW FUNCTIONALITY
 // ============================================================================
-
 
 class NoteWindow {
   constructor() {
