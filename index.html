@@ -153,6 +153,75 @@
     cursor: pointer;
   }
 
+  /* Call Buttons on Kakao Window */
+  .call-button {
+    position: absolute;
+    top: 50px;
+    width: 32px;
+    height: 32px;
+    background-color: rgba(255, 255, 255, 0.8);
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    z-index: 20;
+    display: none;
+  }
+  #videoCallBtn {
+    right: 18px;
+  }
+  #voiceCallBtn {
+    right: 60px;
+  }
+
+  /* Call Windows */
+  .call-window {
+    position: absolute;
+    display: none;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+  }
+  .call-window img {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  .call-close-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    background: transparent;
+    cursor: pointer;
+    border: none;
+    z-index: 30;
+  }
+  .call-confirm-buttons {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    display: flex;
+    z-index: 25;
+  }
+  .call-confirm-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+  }
+  .call-end-btn {
+    position: absolute;
+    bottom: 20px;
+    left: calc(50% + 40px);
+    width: 60px;
+    height: 60px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    z-index: 30;
+  }
+
   /* Note Window */
   #noteWindow {
     top: 220px;
@@ -232,10 +301,46 @@
 <div id="kakaoWindow" class="window">
   <div class="window-topbar"></div>
   <button class="window-close-btn" title="close"></button>
+  <button id="videoCallBtn" class="call-button" title="Video Call"></button>
+  <button id="voiceCallBtn" class="call-button" title="Voice Call"></button>
   <img id="kakaoImage" src="Screenshot 2025-10-15 144717.png" alt="Kakao Window">
   <div id="messageContainer"></div>
   <textarea id="typingArea" placeholder="" spellcheck="false"></textarea>
   <button id="sendButton">Send</button>
+</div>
+
+<!-- Video Call Confirm Window -->
+<div id="videoCallConfirm" class="call-window">
+  <img src="videocall1.png" alt="Video Call Confirm">
+  <button class="call-close-btn" title="close"></button>
+  <div class="call-confirm-buttons">
+    <button class="call-confirm-btn" data-action="accept"></button>
+    <button class="call-confirm-btn" data-action="cancel"></button>
+  </div>
+</div>
+
+<!-- Voice Call Confirm Window -->
+<div id="voiceCallConfirm" class="call-window">
+  <img src="voicecall1.png" alt="Voice Call Confirm">
+  <button class="call-close-btn" title="close"></button>
+  <div class="call-confirm-buttons">
+    <button class="call-confirm-btn" data-action="accept"></button>
+    <button class="call-confirm-btn" data-action="cancel"></button>
+  </div>
+</div>
+
+<!-- Video Call Active Window -->
+<div id="videoCallActive" class="call-window">
+  <img src="videocall.png" alt="Video Call Active">
+  <button class="call-close-btn" title="close"></button>
+  <button class="call-end-btn" title="End Call"></button>
+</div>
+
+<!-- Voice Call Active Window -->
+<div id="voiceCallActive" class="call-window">
+  <img src="voicecall.png" alt="Voice Call Active">
+  <button class="call-close-btn" title="close"></button>
+  <button class="call-end-btn" title="End Call"></button>
 </div>
 
 <!-- Note Window -->
@@ -272,6 +377,11 @@ const DEFAULT_REPLIES = [
   "can we hang out soon?",
   "i miss youuu thooooo"
 ];
+
+const callState = {
+  activeCallTimer: null,
+  callType: null
+};
 
 let zIndexCounter = 100;
 const greenTimers = new WeakMap();
@@ -542,6 +652,7 @@ class CallManager {
     this.voiceConfirm = document.getElementById('voiceCallConfirm');
     this.videoActive = document.getElementById('videoCallActive');
     this.voiceActive = document.getElementById('voiceCallActive');
+    this.kakaoTalk = null;
     
     this.init();
   }
@@ -642,6 +753,7 @@ class CallManager {
     }
   }
 }
+
 // ============================================================================
 // NOTE WINDOW FUNCTIONALITY
 // ============================================================================
