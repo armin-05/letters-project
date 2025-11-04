@@ -387,8 +387,7 @@ const DEFAULT_REPLIES = [
 
 const callState = {
   activeCallTimer: null,
-  callType: null,
-  callAudio: null
+  callType: null
 };
 
 let zIndexCounter = 100;
@@ -702,41 +701,34 @@ class CallManager {
     const endBtn = window.querySelector('.call-end-btn');
     
     const endCall = (userEnded = true) => {
-  // Stop call audio
-  if (callState.callAudio) {
-    callState.callAudio.pause();
-    callState.callAudio.currentTime = 0;
-    callState.callAudio = null;
-  }
-  
-  if (callState.activeCallTimer) {
-    clearTimeout(callState.activeCallTimer);
-    callState.activeCallTimer = null;
-  }
-  window.style.display = 'none';
-  
-  const message = userEnded ? 
-    "why did you call me????" : 
-    "sorryyyyyy, i cant call right now baby";
-  
-  setTimeout(() => {
-    kakaoState.messages.push({ from: "bot", text: message });
-    const messageContainer = document.getElementById('messageContainer');
-    messageContainer.innerHTML = "";
-    kakaoState.messages.forEach(msg => {
-      const container = document.createElement('div');
-      container.className = `messageContainer ${msg.from === "user" ? 'userMsg' : 'botMsg'}`;
+      if (callState.activeCallTimer) {
+        clearTimeout(callState.activeCallTimer);
+        callState.activeCallTimer = null;
+      }
+      window.style.display = 'none';
       
-      const bubble = document.createElement('div');
-      bubble.className = 'message';
-      bubble.textContent = msg.text;
+      const message = userEnded ? 
+        "why did you call me????" : 
+        "sorryyyyyy, i cant call right now baby";
       
-      container.appendChild(bubble);
-      messageContainer.appendChild(container);
-    });
-    messageContainer.scrollTop = messageContainer.scrollHeight;
-  }, 500);
-};
+      setTimeout(() => {
+        kakaoState.messages.push({ from: "bot", text: message });
+        const messageContainer = document.getElementById('messageContainer');
+        messageContainer.innerHTML = "";
+        kakaoState.messages.forEach(msg => {
+          const container = document.createElement('div');
+          container.className = `messageContainer ${msg.from === "user" ? 'userMsg' : 'botMsg'}`;
+          
+          const bubble = document.createElement('div');
+          bubble.className = 'message';
+          bubble.textContent = msg.text;
+          
+          container.appendChild(bubble);
+          messageContainer.appendChild(container);
+        });
+        messageContainer.scrollTop = messageContainer.scrollHeight;
+      }, 500);
+    };
     
     closeBtn.addEventListener('click', () => endCall(true));
     endBtn.addEventListener('click', () => endCall(true));
@@ -745,31 +737,27 @@ class CallManager {
   }
 
   acceptCall(type) {
-  // Start call audio
-  callState.callAudio = new Audio('Kakaotalk Voice Call Ringtone Sound.mp3');
-  callState.callAudio.loop = true;
-  callState.callAudio.play().catch(e => console.log('Audio play failed:', e));
-  
-  if (type === 'video') {
-    this.videoConfirm.style.display = 'none';
-    this.videoActive.style.display = 'block';
-    this.videoActive.style.left = '300px';
-    this.videoActive.style.top = '150px';
-    bringToFront(this.videoActive);
-    
-    callState.activeCallTimer = setTimeout(() => {
-      this.videoActive._endCall(false);
-    }, 30000);
-  } else {
-    this.voiceConfirm.style.display = 'none';
-    this.voiceActive.style.display = 'block';
-    this.voiceActive.style.left = '300px';
-    this.voiceActive.style.top = '150px';
-    bringToFront(this.voiceActive);
-    
-    callState.activeCallTimer = setTimeout(() => {
-      this.voiceActive._endCall(false);
-    }, 30000);
+    if (type === 'video') {
+      this.videoConfirm.style.display = 'none';
+      this.videoActive.style.display = 'block';
+      this.videoActive.style.left = '300px';
+      this.videoActive.style.top = '150px';
+      bringToFront(this.videoActive);
+      
+      callState.activeCallTimer = setTimeout(() => {
+        this.videoActive._endCall(false);
+      }, 30000);
+    } else {
+      this.voiceConfirm.style.display = 'none';
+      this.voiceActive.style.display = 'block';
+      this.voiceActive.style.left = '300px';
+      this.voiceActive.style.top = '150px';
+      bringToFront(this.voiceActive);
+      
+      callState.activeCallTimer = setTimeout(() => {
+        this.voiceActive._endCall(false);
+      }, 30000);
+    }
   }
 }
 
