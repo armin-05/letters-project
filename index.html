@@ -255,29 +255,31 @@
 
 const TARGET_TEXT = `Chapter 151: Demonic nature "What?" Gu Yue Yao Le was shocked when she heard this. Fang Yuan had already struck at lightning speed, his hand chopping her neck! She fainted immediately. The young girl fell down helplessly, and Fang Yuan's hand quickly moved, holding her by the waist. Next, he activated the Stealth Scale Gu, and their bodies vanished on the spot. When Gu Yue Yao Le woke up in a sleepy state, she found herself in a dark mountain cave. She shrugged her head, trying to stand up subconsciously. But she soon found out that her arms were tied behind her back, the rope looped around her neck; she was tied tightly on a large rock. All the Gu worms on her body had been plundered away by Fang Yuan, refined and turned into his. She was merely a fifteen-year-old young girl — with that frail body, how could she break free from that thick ropes wrapped a few times around the rock, even tied with knots? Being trapped in this remote and unfamiliar place, the young girl started to feel frightened. She thought about the moment before she had fainted; even the most naive person would also know that Fang Yuan was going to do something bad to her.`;
 
-const BOT_RESPONSES = [
-  { pattern: "hello", reply: "Heyyyyy" },
-  { pattern: "hi", reply: "hiiiiiii! " },
-  { pattern: "how are you", reply: "I'm goooooood" },
-  { pattern: "bye", reply: " " },
-  { pattern: "thanks", reply: "You're welcomee" },
-  { pattern: "weather", reply: "I hope its sunny today " },
-  { pattern: "good", reply: "thats nice" },
-  { pattern: "sad", reply: "Oh nooo" },
-  { pattern: "angry", reply: "..." },
-];
-
 const DEFAULT_REPLIES = [
   "sorry, i just woke up. im sooo tired today",
   "i fell asleep again. wyd?",
   "Really? im soooo hungry tho",
   "do you still love me?",
-  "sorry, fell asleep"
+  "sorry, fell asleep",
+  "omg i was watching reels for hours lol",
+  "wait what did u say??",
+  "my phone died sorryyyy",
+  "i was taking a nap hehe",
+  "brb my mom is calling me",
+  "lmaoooo thats crazy",
+  "im so bored rn",
+  "ugh i have so much homework",
+  "can we hang out soon?",
+  "i miss youuu thooooo"
 ];
 
 let zIndexCounter = 100;
 const greenTimers = new WeakMap();
-const kakaoState = { savedText: "", messages: [] };
+const kakaoState = { 
+  savedText: "", 
+  messages: [],
+  lastBotReply: null 
+};
 
 // ============================================================================
 // UTILITY FUNCTIONS
@@ -409,12 +411,6 @@ class KakaoTalk {
     this.sendButton = document.getElementById('sendButton');
     this.messageContainer = document.getElementById('messageContainer');
     
-    this.fuse = new Fuse(BOT_RESPONSES, { 
-      keys: ["pattern"], 
-      threshold: 0.4, 
-      includeScore: true 
-    });
-    
     this.init();
   }
 
@@ -466,19 +462,30 @@ class KakaoTalk {
     this.updateSendButton();
     this.renderMessages();
     
+    // Random delay between 10 seconds (10000ms) and 1 minute (60000ms)
+    const delay = Math.floor(Math.random() * (60000 - 10000 + 1)) + 10000;
+    
     setTimeout(() => {
-      const reply = this.getBotReply(text);
+      const reply = this.getBotReply();
       kakaoState.messages.push({ from: "bot", text: reply });
       this.renderMessages();
-    }, 500);
+    }, delay);
   }
 
-  getBotReply(text) {
-    const results = this.fuse.search(text.toLowerCase());
-    if (results.length > 0 && results[0].score < 0.4) {
-      return results[0].item.reply;
+  getBotReply() {
+    // Get a random reply that's different from the last one
+    let reply;
+    const availableReplies = DEFAULT_REPLIES.filter(r => r !== kakaoState.lastBotReply);
+    
+    if (availableReplies.length === 0) {
+      // Fallback if somehow all replies are the same (shouldn't happen with our array)
+      reply = DEFAULT_REPLIES[0];
+    } else {
+      reply = availableReplies[Math.floor(Math.random() * availableReplies.length)];
     }
-    return DEFAULT_REPLIES[Math.floor(Math.random() * DEFAULT_REPLIES.length)];
+    
+    kakaoState.lastBotReply = reply;
+    return reply;
   }
 
   renderMessages() {
