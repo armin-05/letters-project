@@ -425,6 +425,12 @@ class KakaoTalk {
     this.icon.addEventListener('click', () => this.open());
     this.closeBtn.addEventListener('click', () => this.close());
     this.typingArea.addEventListener('input', () => this.updateSendButton());
+    this.typingArea.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        this.sendMessage();
+      }
+    });
     this.sendButton.addEventListener('click', () => this.sendMessage());
     this.window.addEventListener('mousedown', () => bringToFront(this.window));
     this.window.addEventListener('click', (e) => this.handleWindowClick(e));
@@ -528,8 +534,12 @@ class NoteWindow {
     this.content.addEventListener('input', () => this.handleInput());
     this.content.addEventListener('keydown', (e) => this.handleKeydown(e));
     
-    this.renderHighlights('');
+    // Initialize with first 50 characters and open the window
+    const initialText = TARGET_TEXT.substring(0, 50);
+    this.renderHighlights(initialText);
     placeCaretAtEnd(this.content);
+    this.window.style.display = 'block';
+    bringToFront(this.window);
   }
 
   open() {
@@ -544,16 +554,66 @@ class NoteWindow {
 
   handleInput() {
     const text = this.content.innerText.replace(/\uFEFF/g, '');
+    const caretPos = this.getCaretPosition();
     this.renderHighlights(text);
-    placeCaretAtEnd(this.content);
+    this.setCaretPosition(caretPos);
+  }
+
+  getCaretPosition() {
+    const sel = window.getSelection();
+    if (sel.rangeCount === 0) return 0;
+    
+    const range = sel.getRangeAt(0);
+    const preCaretRange = range.cloneRange();
+    preCaretRange.selectNodeContents(this.content);
+    preCaretRange.setEnd(range.endContainer, range.endOffset);
+    
+    return preCaretRange.toString().length;
+  }
+
+  setCaretPosition(pos) {
+    const sel = window.getSelection();
+    let charCount = 0;
+    let foundPos = false;
+    
+    const walkNodes = (node) => {
+      if (foundPos) return;
+      
+      if (node.nodeType === Node.TEXT_NODE) {
+        const nextCharCount = charCount + node.length;
+        if (pos <= nextCharCount) {
+          const range = document.createRange();
+          range.setStart(node, pos - charCount);
+          range.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(range);
+          foundPos = true;
+          return;
+        }
+        charCount = nextCharCount;
+      } else {
+        for (let i = 0; i < node.childNodes.length; i++) {
+          walkNodes(node.childNodes[i]);
+          if (foundPos) return;
+        }
+      }
+    };
+    
+    walkNodes(this.content);
+    
+    if (!foundPos) {
+      placeCaretAtEnd(this.content);
+    }
   }
 
   handleKeydown(e) {
     if (e.key === 'Tab') {
       e.preventDefault();
-      const text = this.content.innerText + '\t';
-      this.renderHighlights(text);
-      placeCaretAtEnd(this.content);
+      const caretPos = this.getCaretPosition();
+      const text = this.content.innerText;
+      const newText = text.slice(0, caretPos) + '\t' + text.slice(caretPos);
+      this.renderHighlights(newText);
+      this.setCaretPosition(caretPos + 1);
     }
   }
 
